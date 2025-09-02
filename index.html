@@ -195,8 +195,6 @@
         }
         
         async function deleteLink(id) {
-            if (!confirm('Delete this link?')) return;
-            
             links = links.filter(link => link.id !== id);
             await saveLinks(links);
             renderLinks();
