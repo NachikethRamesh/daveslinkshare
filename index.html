@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dave's Link Sharing</title>
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:system-ui,sans-serif;background:#f5f5f5;color:#333;padding:20px}
+        .container{max-width:600px;margin:0 auto}
+        header{text-align:center;margin-bottom:30px}
+        h1{font-size:1.8rem;color:#444;margin-bottom:5px}
+        p{color:#666;font-size:.9rem}
+        .card{background:#fff;padding:20px;border-radius:8px;border:1px solid #ddd;margin-bottom:20px}
+        .form-group{margin-bottom:15px}
+        input{width:100%;padding:10px;border:1px solid #ccc;border-radius:4px;font-size:14px}
+        input:focus{outline:none;border-color:#007acc}
+        button{background:#007acc;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px}
+        button:hover{background:#005a99}
+        .btn-sm{padding:5px 10px;font-size:12px;margin-left:5px}
+        .btn-copy{background:#28a745}
+        .btn-delete{background:#dc3545}
+        h2{font-size:1.2rem;margin-bottom:15px;color:#444}
+        .link-item{padding:15px;border-bottom:1px solid #eee;display:flex;justify-content:space-between;align-items:flex-start}
+        .link-item:last-child{border-bottom:none}
+        .link-content{flex:1;margin-right:15px}
+        .link-title{font-weight:500;margin-bottom:3px;word-break:break-word}
+        .link-url{color:#007acc;text-decoration:none;font-size:13px;word-break:break-all}
+        .link-url:hover{text-decoration:underline}
+        .link-time{font-size:12px;color:#999;margin-top:3px}
+        .link-actions{display:flex;gap:8px}
+        .empty{text-align:center;padding:30px;color:#666}
+        .notification{position:fixed;top:20px;right:20px;padding:10px 15px;border-radius:4px;color:#fff;font-size:14px;display:none;z-index:1000}
+        .success{background:#28a745}
+        .error{background:#dc3545}
+        @media(max-width:600px){
+            body{padding:10px}
+            .link-item{flex-direction:column;align-items:stretch}
+            .link-content{margin-right:0;margin-bottom:10px}
+            .link-actions{justify-content:flex-end}
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Dave's Link Sharing</h1>
+            <p>Share links between your devices</p>
+        </header>
+        <div class="card">
+            <form id="f">
+                <div class="form-group">
+                    <input type="url" id="u" placeholder="Paste your link here..." required>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="t" placeholder="Optional title">
+                </div>
+                <button type="submit">Add Link</button>
+            </form>
+        </div>
+        <div class="card">
+            <h2>Saved Links</h2>
+            <div id="l">
+                <div class="empty">No links saved yet</div>
+            </div>
+        </div>
+        <div id="n" class="notification"></div>
+    </div>
+    <script>
+        const f=document.getElementById('f'),u=document.getElementById('u'),t=document.getElementById('t'),l=document.getElementById('l'),n=document.getElementById('n');
+        const getLinks=()=>JSON.parse(localStorage.getItem('daveLinks')||'[]');
+        const saveLinks=links=>localStorage.setItem('daveLinks',JSON.stringify(links));
+        const timeAgo=ts=>{
+            const diff=Date.now()-new Date(ts);
+            if(diff<6e4)return'now';
+            if(diff<36e5)return Math.floor(diff/6e4)+'m';
+            if(diff<864e5)return Math.floor(diff/36e5)+'h';
+            if(diff<6048e5)return Math.floor(diff/864e5)+'d';
+            return new Date(ts).toLocaleDateString();
+        };
+        const escapeHtml=text=>{const div=document.createElement('div');div.textContent=text;return div.innerHTML;};
+        const showNotification=(msg,type)=>{
+            n.textContent=msg;
+            n.className=`notification ${type}`;
+            n.style.display='block';
+            setTimeout(()=>n.style.display='none',2000);
+        };
+        const renderLinks=()=>{
+            const links=getLinks();
+            l.innerHTML=links.length?links.map(link=>`
+                <div class="link-item">
+                    <div class="link-content">
+                        <div class="link-title">${escapeHtml(link.title)}</div>
+                        <a href="${link.url}" target="_blank" class="link-url">${escapeHtml(link.url)}</a>
+                        <div class="link-time">${timeAgo(link.timestamp)}</div>
+                    </div>
+                    <div class="link-actions">
+                        <button class="btn-sm btn-copy" onclick="copyLink('${link.url}')">Copy</button>
+                        <button class="btn-sm btn-delete" onclick="deleteLink('${link.id}')">Delete</button>
+                    </div>
+                </div>
+            `).join(''):'<div class="empty">No links saved yet</div>';
+        };
+        const copyLink=async url=>{
+            try{
+                await navigator.clipboard.writeText(url);
+            }catch{
+                const ta=document.createElement('textarea');
+                ta.value=url;
+                document.body.appendChild(ta);
+                ta.select();
+                document.execCommand('copy');
+                document.body.removeChild(ta);
+            }
+            showNotification('Copied!','success');
+        };
+        const deleteLink=id=>{
+            if(!confirm('Delete this link?'))return;
+            const links=getLinks().filter(link=>link.id!==id);
+            saveLinks(links);
+            showNotification('Link deleted','success');
+            renderLinks();
+        };
+        f.addEventListener('submit',e=>{
+            e.preventDefault();
+            const url=u.value.trim(),title=t.value.trim();
+            if(!url)return showNotification('Please enter a URL','error');
+            const links=getLinks();
+            links.unshift({
+                id:Date.now().toString(),
+                url,
+                title:title||url,
+                timestamp:new Date().toISOString()
+            });
+            saveLinks(links);
+            u.value=t.value='';
+            u.focus();
+            showNotification('Link saved!','success');
+            renderLinks();
+        });
+        u.focus();
+        renderLinks();
+    </script>
+</body>
+</html>
