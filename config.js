@@ -7,7 +7,7 @@ const CONFIG = {
     // 2. Copy bin ID from URL after /b/
     // 3. Get API key from API Keys tab
     
-    BIN_ID: '68b66dc6d0ea881f406eefe6',           // e.g., '507f1f77bcf86cd799439011'
+    BIN_ID: '68b6711243b1c97be93406bd',           // e.g., '507f1f77bcf86cd799439011'
     API_KEY: '$2a$10$ny3GTPiENLtRJQfE9RmHb.DjGt06dQlR9QoyPShSzzXjSMWpL15f.',         // e.g., '$2a$10$abc123...'
     
     // Fallback to local storage if cloud fails
@@ -20,3 +20,4 @@ const CONFIG = {
 // 3. Replace YOUR_BIN_ID_HERE with your actual bin ID
 // 4. Replace YOUR_API_KEY_HERE with your actual API key
 // 5. Deploy to GitHub Pages
+
