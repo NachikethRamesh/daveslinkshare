@@ -164,7 +164,7 @@
                 return;
             }
             
-            container.innerHTML = links.map(link => `
+            container.innerHTML = links.map((link, index) => `
                 <div class="link">
                     <div class="link-info">
                         <div class="link-title">${escapeHtml(link.title)}</div>
@@ -172,11 +172,20 @@
                         <div class="link-time">${timeAgo(link.timestamp)}</div>
                     </div>
                     <div class="link-actions">
-                        <button class="btn-sm btn-copy" onclick="copyLink('${link.url}')">Copy</button>
-                        <button class="btn-sm btn-delete" onclick="deleteLink('${link.id}')">Delete</button>
+                        <button class="btn-sm btn-copy" data-url="${escapeHtml(link.url)}">Copy</button>
+                        <button class="btn-sm btn-delete" data-id="${link.id}">Delete</button>
                     </div>
                 </div>
             `).join('');
+            
+            // Add event listeners for copy and delete buttons
+            container.querySelectorAll('.btn-copy').forEach(btn => {
+                btn.addEventListener('click', () => copyLink(btn.dataset.url));
+            });
+            
+            container.querySelectorAll('.btn-delete').forEach(btn => {
+                btn.addEventListener('click', () => deleteLink(btn.dataset.id));
+            });
         }
         
         async function addLink() {
@@ -213,9 +222,24 @@
         }
         
         async function deleteLink(id) {
+            console.log('🗑️ Delete clicked for ID:', id);
+            console.log('📋 Current links count:', links.length);
+            
+            const originalLength = links.length;
             links = links.filter(link => link.id !== id);
+            
+            console.log('📋 After filter, links count:', links.length);
+            console.log('✅ Deleted:', originalLength - links.length, 'link(s)');
+            
+            if (originalLength === links.length) {
+                console.warn('⚠️ No link was deleted - ID not found:', id);
+                showStatus('Link not found', 'error');
+                return;
+            }
+            
             await saveLinks(links);
             renderLinks();
+            showStatus('Link deleted', 'success');
         }
         
         async function copyLink(url) {
