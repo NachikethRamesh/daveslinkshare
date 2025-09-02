@@ -17,6 +17,7 @@
         input:focus{outline:none;border-color:#007acc}
         button{background:#007acc;color:#fff;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;font-size:14px}
         button:hover{background:#005a99}
+        button:disabled{background:#ccc;cursor:not-allowed}
         .btn-sm{padding:5px 10px;font-size:12px;margin-left:5px}
         .btn-copy{background:#28a745}
         .btn-delete{background:#dc3545}
@@ -30,9 +31,14 @@
         .link-time{font-size:12px;color:#999;margin-top:3px}
         .link-actions{display:flex;gap:8px}
         .empty{text-align:center;padding:30px;color:#666}
+        .loading{text-align:center;padding:30px;color:#007acc}
         .notification{position:fixed;top:20px;right:20px;padding:10px 15px;border-radius:4px;color:#fff;font-size:14px;display:none;z-index:1000}
         .success{background:#28a745}
         .error{background:#dc3545}
+        .setup{background:#e8f4fd;border:1px solid #bee5eb;padding:20px;border-radius:8px;margin-bottom:20px}
+        .method{background:#f8f9fa;border:1px solid #dee2e6;padding:15px;border-radius:8px;margin:10px 0}
+        .method h4{color:#495057;margin-bottom:10px}
+        .method button{margin-top:10px}
         @media(max-width:600px){
             body{padding:10px}
             .link-item{flex-direction:column;align-items:stretch}
@@ -47,7 +53,40 @@
             <h1>Dave's Link Sharing</h1>
             <p>Share links between your devices</p>
         </header>
-        <div class="card">
+
+        <div class="setup" id="setup">
+            <h3>🔧 Choose Storage Method</h3>
+            
+            <div class="method">
+                <h4>🌐 Option 1: Free Cloud Storage (Recommended)</h4>
+                <p>Uses JSONBin.io for cross-device sync</p>
+                <button onclick="setupJSONBin()">Setup Cloud Storage</button>
+            </div>
+            
+            <div class="method">
+                <h4>💾 Option 2: Local Storage (Simple)</h4>
+                <p>Works immediately, but links stay on this device only</p>
+                <button onclick="useLocalStorage()">Use Local Storage</button>
+            </div>
+        </div>
+
+        <div id="jsonbinSetup" style="display:none" class="card">
+            <h3>🌐 JSONBin Setup</h3>
+            <ol style="margin:10px 0 15px 20px">
+                <li>Go to <a href="https://jsonbin.io" target="_blank">jsonbin.io</a> and sign up</li>
+                <li>Click "Create Bin" → Name it "Dave Links"</li>
+                <li>Replace the default content with: <code>{"links":[]}</code></li>
+                <li>Click "Create"</li>
+                <li>Copy the Bin ID from the URL (after /b/)</li>
+                <li>Go to "API Keys" tab and copy your key</li>
+            </ol>
+            <input type="text" id="binId" placeholder="Bin ID (e.g., 507f1f77bcf86cd799439011)">
+            <input type="text" id="apiKey" placeholder="API Key (starts with $2a$10$...)">
+            <button onclick="saveJSONBinConfig()">Save & Start Syncing</button>
+            <button onclick="backToOptions()" style="background:#6c757d;margin-left:10px">Back</button>
+        </div>
+
+        <div class="card" id="addForm" style="display:none">
             <form id="f">
                 <div class="form-group">
                     <input type="url" id="u" placeholder="Paste your link here..." required>
@@ -55,21 +94,125 @@
                 <div class="form-group">
                     <input type="text" id="t" placeholder="Optional title">
                 </div>
-                <button type="submit">Add Link</button>
+                <button type="submit" id="addBtn">Add Link</button>
             </form>
         </div>
-        <div class="card">
-            <h2>Saved Links</h2>
+
+        <div class="card" id="linksSection" style="display:none">
+            <h2>Saved Links <span id="storageType"></span></h2>
             <div id="l">
-                <div class="empty">No links saved yet</div>
+                <div class="loading">Loading links...</div>
             </div>
         </div>
+
         <div id="n" class="notification"></div>
     </div>
+
     <script>
+        let config = JSON.parse(localStorage.getItem('linkSharingConfig') || '{}');
+        let storageMode = 'none'; // 'local' or 'cloud'
         const f=document.getElementById('f'),u=document.getElementById('u'),t=document.getElementById('t'),l=document.getElementById('l'),n=document.getElementById('n');
-        const getLinks=()=>JSON.parse(localStorage.getItem('daveLinks')||'[]');
-        const saveLinks=links=>localStorage.setItem('daveLinks',JSON.stringify(links));
+        
+        const showNotification=(msg,type)=>{
+            n.textContent=msg;
+            n.className=`notification ${type}`;
+            n.style.display='block';
+            setTimeout(()=>n.style.display='none',3000);
+        };
+
+        const setupJSONBin=()=>{
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('jsonbinSetup').style.display = 'block';
+        };
+
+        const backToOptions=()=>{
+            document.getElementById('jsonbinSetup').style.display = 'none';
+            document.getElementById('setup').style.display = 'block';
+        };
+
+        const useLocalStorage=()=>{
+            storageMode = 'local';
+            config = {mode: 'local'};
+            localStorage.setItem('linkSharingConfig', JSON.stringify(config));
+            startApp();
+        };
+
+        const saveJSONBinConfig=()=>{
+            const binId = document.getElementById('binId').value.trim();
+            const apiKey = document.getElementById('apiKey').value.trim();
+            
+            if(!binId || !apiKey) {
+                showNotification('Please enter both Bin ID and API Key','error');
+                return;
+            }
+            
+            storageMode = 'cloud';
+            config = {mode: 'cloud', binId, apiKey};
+            localStorage.setItem('linkSharingConfig', JSON.stringify(config));
+            startApp();
+        };
+
+        const startApp=()=>{
+            document.getElementById('setup').style.display = 'none';
+            document.getElementById('jsonbinSetup').style.display = 'none';
+            document.getElementById('addForm').style.display = 'block';
+            document.getElementById('linksSection').style.display = 'block';
+            
+            document.getElementById('storageType').textContent = 
+                storageMode === 'cloud' ? '☁️' : '💾';
+            
+            showNotification(`Using ${storageMode} storage!`,'success');
+            loadLinks();
+        };
+
+        // Cloud storage functions
+        const cloudApiCall=async(method,data=null)=>{
+            const url = `https://api.jsonbin.io/v3/b/${config.binId}`;
+            const options = {
+                method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Master-Key': config.apiKey
+                }
+            };
+            
+            if(data) options.body = JSON.stringify({links: data});
+            
+            try {
+                const response = await fetch(url, options);
+                if(!response.ok) throw new Error('API Error');
+                const result = await response.json();
+                return method === 'GET' ? (result.record?.links || []) : result;
+            } catch(error) {
+                showNotification('Network error. Using local backup.','error');
+                return method === 'GET' ? getLocalLinks() : false;
+            }
+        };
+
+        // Local storage functions
+        const getLocalLinks=()=>JSON.parse(localStorage.getItem('daveLinks')||'[]');
+        const saveLocalLinks=links=>{
+            localStorage.setItem('daveLinks',JSON.stringify(links));
+            return true;
+        };
+
+        // Universal functions
+        const loadLinks=async()=>{
+            const links = storageMode === 'cloud' ? 
+                await cloudApiCall('GET') : 
+                getLocalLinks();
+            renderLinks(Array.isArray(links) ? links : []);
+        };
+
+        const saveLinks=async(links)=>{
+            document.getElementById('addBtn').disabled = true;
+            const result = storageMode === 'cloud' ? 
+                await cloudApiCall('PUT', links) : 
+                saveLocalLinks(links);
+            document.getElementById('addBtn').disabled = false;
+            return result !== false;
+        };
+
         const timeAgo=ts=>{
             const diff=Date.now()-new Date(ts);
             if(diff<6e4)return'now';
@@ -78,15 +221,10 @@
             if(diff<6048e5)return Math.floor(diff/864e5)+'d';
             return new Date(ts).toLocaleDateString();
         };
+
         const escapeHtml=text=>{const div=document.createElement('div');div.textContent=text;return div.innerHTML;};
-        const showNotification=(msg,type)=>{
-            n.textContent=msg;
-            n.className=`notification ${type}`;
-            n.style.display='block';
-            setTimeout(()=>n.style.display='none',2000);
-        };
-        const renderLinks=()=>{
-            const links=getLinks();
+
+        const renderLinks=(links)=>{
             l.innerHTML=links.length?links.map(link=>`
                 <div class="link-item">
                     <div class="link-content">
@@ -101,6 +239,7 @@
                 </div>
             `).join(''):'<div class="empty">No links saved yet</div>';
         };
+
         const copyLink=async url=>{
             try{
                 await navigator.clipboard.writeText(url);
@@ -112,34 +251,53 @@
                 document.execCommand('copy');
                 document.body.removeChild(ta);
             }
-            showNotification('Copied!','success');
+            showNotification('Link copied!','success');
         };
-        const deleteLink=id=>{
+
+        const deleteLink=async id=>{
             if(!confirm('Delete this link?'))return;
-            const links=getLinks().filter(link=>link.id!==id);
-            saveLinks(links);
-            showNotification('Link deleted','success');
-            renderLinks();
+            
+            const links = storageMode === 'cloud' ? 
+                await cloudApiCall('GET') : 
+                getLocalLinks();
+            const filteredLinks = links.filter(link=>link.id!==id);
+            
+            if(await saveLinks(filteredLinks)) {
+                showNotification('Link deleted','success');
+                renderLinks(filteredLinks);
+            }
         };
-        f.addEventListener('submit',e=>{
+
+        f?.addEventListener('submit',async e=>{
             e.preventDefault();
             const url=u.value.trim(),title=t.value.trim();
             if(!url)return showNotification('Please enter a URL','error');
-            const links=getLinks();
-            links.unshift({
+            
+            const links = storageMode === 'cloud' ? 
+                await cloudApiCall('GET') : 
+                getLocalLinks();
+            const newLink = {
                 id:Date.now().toString(),
                 url,
                 title:title||url,
                 timestamp:new Date().toISOString()
-            });
-            saveLinks(links);
-            u.value=t.value='';
-            u.focus();
-            showNotification('Link saved!','success');
-            renderLinks();
+            };
+            
+            const updatedLinks = [newLink, ...links];
+            
+            if(await saveLinks(updatedLinks)) {
+                u.value=t.value='';
+                u.focus();
+                showNotification(`Link saved ${storageMode === 'cloud' ? 'and synced' : 'locally'}!`,'success');
+                renderLinks(updatedLinks);
+            }
         });
-        u.focus();
-        renderLinks();
+
+        // Initialize
+        if(config.mode) {
+            storageMode = config.mode;
+            startApp();
+        }
     </script>
 </body>
 </html>
