@@ -75,6 +75,11 @@
         async function cloudSave(data) {
             if (!isConfigured) return false;
             try {
+                console.log('🔄 Attempting cloud save...', {
+                    binId: CONFIG.BIN_ID,
+                    dataCount: data.length
+                });
+                
                 const response = await fetch(`https://api.jsonbin.io/v3/b/${CONFIG.BIN_ID}`, {
                     method: 'PUT',
                     headers: {
@@ -83,8 +88,21 @@
                     },
                     body: JSON.stringify({links: data})
                 });
-                return response.ok;
-            } catch {
+                
+                console.log('📡 Cloud save response:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('❌ Cloud save failed:', errorText);
+                    showStatus(`Cloud error: ${response.status}`, 'error');
+                    return false;
+                }
+                
+                console.log('✅ Cloud save successful!');
+                return true;
+            } catch (error) {
+                console.error('❌ Network error:', error);
+                showStatus('Network error', 'error');
                 return false;
             }
         }
