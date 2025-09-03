@@ -8,7 +8,7 @@
     "dev": "nodemon server/server.js",
     "setup": "node server/setup.js",
     "test-env": "node server/test-env.js",
-    "build": "echo 'Static files ready for deployment'",
+    "build": "node build.js",
     "deploy": "wrangler deploy",
     "deploy:pages": "wrangler pages deploy client",
     "deploy:worker": "wrangler deploy server/server.js",
