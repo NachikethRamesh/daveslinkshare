@@ -144,15 +144,14 @@ class LinksApp {
             
             if (!response.ok) {
                 const errorText = await response.text();
-
+                this.showStatus(`API Error: ${response.status} - ${errorText}`, 'error');
                 throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const result = await response.json();
-
             return method === 'GET' ? result.record : true;
         } catch (error) {
-
+            this.showStatus(`Network Error: ${error.message}`, 'error');
             return null;
         }
     }
