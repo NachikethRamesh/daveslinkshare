@@ -266,7 +266,18 @@ class LinksApp {
         
         const users = await this.fetchUsers();
         const user = users[this.currentUser];
-        return user?.userHash || null;
+        
+        if (!user) {
+            this.showStatus(`Debug: User ${this.currentUser} not found in fetchUsers`, 'error');
+            return null;
+        }
+        
+        if (!user.userHash) {
+            this.showStatus(`Debug: User ${this.currentUser} has no userHash`, 'error');
+            return null;
+        }
+        
+        return user.userHash;
     }
 
     async loginUser(username) {
@@ -337,16 +348,19 @@ class LinksApp {
     async saveLinksToCloud(data) {    
         // Validate prerequisites
         if (!this.currentUser) {
+            this.showStatus('Debug: No current user', 'error');
             return false;
         }
         
         if (!CONFIG.BIN_ID || !CONFIG.API_KEY) {
+            this.showStatus('Debug: Missing BIN_ID or API_KEY', 'error');
             return false;
         }
         
         // Get user hash for data isolation
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
+            this.showStatus('Debug: Could not get user hash', 'error');
             return false;
         }
 
@@ -363,9 +377,14 @@ class LinksApp {
             
             // Save back to cloud
             const result = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData);
-            return result !== null;
+            if (result === null) {
+                this.showStatus('Debug: makeCloudRequest returned null', 'error');
+                return false;
+            }
+            return true;
             
         } catch (error) {
+            this.showStatus(`Debug: Exception - ${error.message}`, 'error');
             return false;
         }
     }
