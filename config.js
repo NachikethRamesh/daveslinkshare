@@ -1,7 +1,7 @@
 // Dave's Links Configuration
 const CONFIG = {
     // JSONBin Configuration
-    BIN_ID: '68b66dc6d0ea881f406eefe6',           // Links storage bin
+    BIN_ID: '668b7de25ae596e708fe0ea04',           // Links storage bin
     AUTH_BIN_ID: '68b7c443ae596e708fe0d657',      // User authentication bin
     API_KEY: '$2a$10$ny3GTPiENLtRJQfE9RmHb.DjGt06dQlR9QoyPShSzzXjSMWpL15f.',
     
