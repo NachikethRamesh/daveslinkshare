@@ -1,0 +1,31 @@
+{
+  // Cloudflare Workers/Pages configuration for Dave's Links
+  "name": "daves-link-sharing-app",
+  "compatibility_date": "2024-01-01",
+  "node_compat": true,
+  
+  // For Cloudflare Pages (static client files)
+  "pages_build_output_dir": "client",
+  
+  // Environment variables (set these in Cloudflare dashboard)
+  "vars": {
+    "NODE_ENV": "production"
+  },
+  
+  // For Cloudflare Workers (if deploying API separately)
+  "main": "server/server.js",
+  "compatibility_flags": ["nodejs_compat"],
+  
+  // Build configuration
+  "build": {
+    "command": "npm run build",
+    "cwd": ".",
+    "watch_dir": ["server", "client"]
+  },
+  
+  // Routes for hybrid deployment
+  "routes": [
+    { "pattern": "/api/*", "custom_domain": true },
+    { "pattern": "/*", "custom_domain": true }
+  ]
+}
