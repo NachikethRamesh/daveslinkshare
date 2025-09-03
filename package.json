@@ -10,8 +10,8 @@
     "setup:cloudflare": "node setup-cloudflare-secrets.js",
     "test-env": "node server/test-env.js",
     "build": "node build.js",
-    "deploy": "npm run build && wrangler pages deploy dist",
-    "deploy:pages": "npm run build && wrangler pages deploy dist",
+    "deploy": "npm run build",
+    "deploy:pages": "npm run build",
     "deploy:worker": "wrangler deploy server/server.js",
     "test": "echo 'Tests not implemented yet'"
   },
