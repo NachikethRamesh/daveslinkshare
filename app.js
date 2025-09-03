@@ -36,6 +36,18 @@ class LinksApp {
         return hash.toString();
     }
 
+    generateUserHash(username, timestamp) {
+        // Create a unique hash combining username and creation timestamp
+        const combined = username + timestamp + Math.random().toString(36);
+        let hash = 0;
+        for (let i = 0; i < combined.length; i++) {
+            const char = combined.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+        }
+        return Math.abs(hash).toString(36).substring(0, 8); // 8-character unique ID
+    }
+
     isValidUrl(string) {
         try {
             new URL(string);
@@ -100,6 +112,8 @@ class LinksApp {
     // Cloud API Methods
     async makeCloudRequest(binId, method = 'GET', data = null) {
         try {
+            console.log(`🌐 Making ${method} request to bin: ${binId}`);
+            
             const options = {
                 method,
                 headers: {
@@ -110,18 +124,23 @@ class LinksApp {
 
             if (data && method !== 'GET') {
                 options.body = JSON.stringify(data);
+                console.log(`📤 Sending data:`, Object.keys(data));
             }
 
             const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, options);
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                const errorText = await response.text();
+                console.error(`❌ HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const result = await response.json();
+            console.log(`✅ ${method} request successful`);
+            
             return method === 'GET' ? result.record : true;
         } catch (error) {
-            console.error(`Cloud ${method} failed:`, error);
+            console.error(`❌ Cloud ${method} failed:`, error);
             return null;
         }
     }
@@ -165,13 +184,18 @@ class LinksApp {
             throw new Error('Username already exists');
         }
 
+        const createdAt = new Date().toISOString();
+        const userHash = this.generateUserHash(username, createdAt);
+
         users[username] = {
             password: this.hashPassword(password),
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
+            userHash: userHash,
+            createdAt: createdAt,
+            lastLogin: createdAt
         };
 
         const cloudSuccess = await this.saveUsers(users);
+        console.log(`Created user ${username} with hash: ${userHash}`);
         return cloudSuccess;
     }
 
@@ -190,6 +214,14 @@ class LinksApp {
     }
 
     // Session Management
+    async getCurrentUserHash() {
+        if (!this.currentUser) return null;
+        
+        const users = await this.fetchUsers();
+        const user = users[this.currentUser];
+        return user?.userHash || null;
+    }
+
     loginUser(username) {
         this.currentUser = username;
         localStorage.setItem('daveLinksCurrentUser', username);
@@ -244,21 +276,54 @@ class LinksApp {
     }
 
     async saveLinksToCloud(data) {
-        if (!this.isConfigured) return false;
+        if (!this.isConfigured) {
+            console.log('❌ Links bin not configured');
+            return false;
+        }
         
-        const cloudData = {
-            [`links_${this.currentUser}`]: data,
+        const userHash = await this.getCurrentUserHash();
+        if (!userHash) {
+            console.log('❌ Could not get user hash');
+            return false;
+        }
+
+        console.log(`💾 Saving ${data.length} links to cloud for user hash: ${userHash}`);
+        
+        // Get existing cloud data first
+        const existingData = await this.makeCloudRequest(CONFIG.BIN_ID) || {};
+        
+        // Update with user's links
+        existingData[userHash] = {
+            username: this.currentUser,
+            links: data,
             lastUpdated: new Date().toISOString()
         };
         
-        return await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', cloudData) !== null;
+        const success = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
+        console.log(success ? '✅ Links saved to cloud successfully' : '❌ Failed to save links to cloud');
+        
+        return success;
     }
 
     async loadLinksFromCloud() {
-        if (!this.isConfigured) return [];
+        if (!this.isConfigured) {
+            console.log('❌ Links bin not configured');
+            return [];
+        }
+        
+        const userHash = await this.getCurrentUserHash();
+        if (!userHash) {
+            console.log('❌ Could not get user hash');
+            return [];
+        }
+
+        console.log(`📥 Loading links from cloud for user hash: ${userHash}`);
         
         const cloudData = await this.makeCloudRequest(CONFIG.BIN_ID);
-        return cloudData?.[`links_${this.currentUser}`] || [];
+        const userLinks = cloudData?.[userHash]?.links || [];
+        
+        console.log(`📥 Loaded ${userLinks.length} links from cloud`);
+        return userLinks;
     }
 
     async saveLinks(data) {

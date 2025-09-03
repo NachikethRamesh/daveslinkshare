@@ -30,6 +30,13 @@ body {
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    /* Prevent horizontal scroll on mobile */
+    overflow-x: hidden;
+    /* Better text rendering */
+    text-rendering: optimizeLegibility;
+    /* Prevent touch callouts on iOS */
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 /* Authentication Styles */
@@ -91,12 +98,32 @@ body {
     font-family: var(--font-primary);
     background: var(--white);
     transition: all 0.2s ease;
+    /* Cross-browser input styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
 }
 
 .form-input:focus {
     outline: none;
     border-color: var(--pocket-red);
     box-shadow: 0 0 0 2px rgba(239, 64, 86, 0.1);
+}
+
+/* Remove default styling for input types */
+.form-input[type="url"]:invalid {
+    box-shadow: none;
+}
+
+.form-input::-webkit-outer-spin-button,
+.form-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.form-input[type="number"] {
+    -moz-appearance: textfield;
 }
 
 .form-select {
@@ -109,12 +136,32 @@ body {
     background: var(--white);
     cursor: pointer;
     transition: all 0.2s ease;
+    /* Cross-browser select styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='%23666666' d='M4.427 9.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 9H4.604a.25.25 0 00-.177.427z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
 }
 
 .form-select:focus {
     outline: none;
     border-color: var(--pocket-red);
     box-shadow: 0 0 0 2px rgba(239, 64, 86, 0.1);
+}
+
+/* Firefox specific fixes */
+.form-select:-moz-focusring {
+    color: transparent;
+    text-shadow: 0 0 0 var(--text-primary);
+}
+
+/* IE/Edge specific fixes */
+.form-select::-ms-expand {
+    display: none;
 }
 
 .btn {
@@ -131,6 +178,18 @@ body {
     cursor: pointer;
     transition: all 0.2s ease;
     line-height: 1;
+    /* Cross-browser button styling */
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+    text-align: center;
+    vertical-align: middle;
+    white-space: nowrap;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
 }
 
 .btn-primary {
@@ -534,6 +593,22 @@ body {
         right: 16px;
         left: 16px;
         max-width: none;
+    }
+    
+    /* Mobile-specific form improvements */
+    .form-input, .form-select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        min-height: 44px; /* Better touch target */
+    }
+    
+    .btn {
+        min-height: 44px; /* Better touch target */
+        padding: 14px 24px;
+    }
+    
+    .btn-small {
+        min-height: 36px;
+        padding: 10px 16px;
     }
 }
 
