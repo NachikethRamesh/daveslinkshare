@@ -23,12 +23,6 @@ class LinksApp {
         this.isAuthConfigured = !!(CONFIG.AUTH_BIN_ID && CONFIG.API_KEY && 
                                   CONFIG.AUTH_BIN_ID.length > 10 && CONFIG.API_KEY.length > 10);
         
-        console.log('🔧 Dynamic Configuration Check:');
-        console.log('  BIN_ID:', CONFIG.BIN_ID ? `${CONFIG.BIN_ID.substring(0, 8)}...` : 'Missing');
-        console.log('  AUTH_BIN_ID:', CONFIG.AUTH_BIN_ID ? `${CONFIG.AUTH_BIN_ID.substring(0, 8)}...` : 'Missing');
-        console.log('  API_KEY:', CONFIG.API_KEY ? `${CONFIG.API_KEY.substring(0, 8)}...` : 'Missing');
-        console.log('  ✅ Links configured:', this.isConfigured);
-        console.log('  ✅ Auth configured:', this.isAuthConfigured);
         
         if (!this.isConfigured && this.currentUser) {
             document.getElementById('configWarning').style.display = 'block';
@@ -127,6 +121,8 @@ class LinksApp {
     // Cloud API Methods
     async makeCloudRequest(binId, method = 'GET', data = null) {
         try {
+
+            
             const options = {
                 method,
                 headers: {
@@ -137,18 +133,26 @@ class LinksApp {
 
             if (data && method !== 'GET') {
                 options.body = JSON.stringify(data);
+
             }
 
-            const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, options);
+            const url = `https://api.jsonbin.io/v3/b/${binId}`;
+
+            
+            const response = await fetch(url, options);
+
             
             if (!response.ok) {
-                throw new Error(`HTTP ${response.status}`);
+                const errorText = await response.text();
+
+                throw new Error(`HTTP ${response.status}: ${errorText}`);
             }
 
             const result = await response.json();
+
             return method === 'GET' ? result.record : true;
         } catch (error) {
-            console.error(`Cloud ${method} failed for ${binId}:`, error.message);
+
             return null;
         }
     }
@@ -205,7 +209,7 @@ class LinksApp {
         };
 
         const cloudSuccess = await this.saveUsers(users);
-        console.log(`Created user ${username} with strong hash: ${userHash}`);
+
         return cloudSuccess;
     }
 
@@ -229,14 +233,14 @@ class LinksApp {
             
             // Upgrade user to new hash system on successful login
             if (passwordMatches) {
-                console.log(`Upgrading user ${username} to strong hash system`);
+
                 user.password = await this.hashPassword(password);
                 user.hashVersion = 2;
                 
                 // Generate new strong user hash if missing
                 if (!user.userHash || user.userHash.length < 16) {
                     user.userHash = await this.generateUserHash(username, user.createdAt || new Date().toISOString());
-                    console.log(`Generated new strong user hash: ${user.userHash}`);
+
                 }
             }
         }
@@ -269,7 +273,7 @@ class LinksApp {
         this.currentUser = username;
         localStorage.setItem('daveLinksCurrentUser', username);
         
-        console.log(`🏠 Logging in user: ${username}`);
+
         
         // Update UI
         document.getElementById('authContainer').classList.add('hidden');
@@ -282,11 +286,7 @@ class LinksApp {
         await this.loadLinks();
         
         // Show appropriate welcome message based on links count
-        if (this.links.length === 0) {
-            console.log(`🆕 New user ${username} - showing empty list`);
-        } else {
-            console.log(`👋 Existing user ${username} - loaded ${this.links.length} links`);
-        }
+
     }
 
     logoutUser() {
@@ -312,7 +312,7 @@ class LinksApp {
                 await this.loginUser(savedUser);
             } else {
                 // User was deleted from AUTH_BIN, clear local session
-                console.log(`User ${savedUser} no longer exists in AUTH_BIN, clearing session`);
+
                 localStorage.removeItem('daveLinksCurrentUser');
                 this.showStatus('Session expired. Please login again.', 'error');
             }
@@ -326,7 +326,7 @@ class LinksApp {
 
     requireAuth(operation) {
         if (!this.currentUser) {
-            console.error(`❌ Cannot ${operation}: No authenticated user`);
+
             return false;
         }
         return true;
@@ -334,33 +334,24 @@ class LinksApp {
 
     // Local storage methods removed - using cloud-only storage
 
-    async saveLinksToCloud(data) {
-        console.log('💾 Attempting to save', data.length, 'links to cloud');
-        
-        // Check if user is authenticated
+    async saveLinksToCloud(data) {    
+        // Validate prerequisites
         if (!this.currentUser) {
-            console.error('❌ No user logged in');
             return false;
         }
         
-        // Check if we have BIN_ID and API_KEY
         if (!CONFIG.BIN_ID || !CONFIG.API_KEY) {
-            console.error('❌ Missing BIN_ID or API_KEY');
             return false;
         }
         
         // Get user hash for data isolation
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
-            console.error('❌ Could not generate user hash');
             return false;
         }
 
-        console.log('📤 Saving to BIN_ID:', CONFIG.BIN_ID.substring(0, 8) + '...');
-        console.log('📤 User hash:', userHash);
-        
         try {
-            // Get existing data from cloud
+            // Get existing data from cloud (or start with empty object)
             const existingData = await this.makeCloudRequest(CONFIG.BIN_ID) || {};
             
             // Add/update this user's data
@@ -371,64 +362,60 @@ class LinksApp {
             };
             
             // Save back to cloud
-            const success = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
-            console.log(success ? '✅ Successfully saved to cloud!' : '❌ Failed to save to cloud');
-            return success;
+            const result = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData);
+            return result !== null;
+            
         } catch (error) {
-            console.error('❌ Cloud save error:', error);
             return false;
         }
     }
 
     async loadLinksFromCloud() {
+        // Validate prerequisites
         if (!this.currentUser) {
-            console.log('⚠️ No user logged in');
             return [];
         }
         
         if (!CONFIG.BIN_ID || !CONFIG.API_KEY) {
-            console.error('❌ Missing BIN_ID or API_KEY');
             return [];
         }
         
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
-            console.error('❌ Could not get user hash');
             return [];
         }
 
-        console.log('📥 Loading from BIN_ID:', CONFIG.BIN_ID.substring(0, 8) + '...');
-        console.log('📥 User hash:', userHash);
-        
         try {
             const cloudData = await this.makeCloudRequest(CONFIG.BIN_ID);
-            const userData = cloudData?.[userHash];
-            
-            // Security check: verify username matches
-            if (userData && userData.username !== this.currentUser) {
-                console.error('❌ Security violation: Hash mismatch');
+            if (!cloudData) {
                 return [];
             }
             
-            const links = userData?.links || [];
-            console.log('✅ Loaded', links.length, 'links from cloud');
-            return links;
+            const userData = cloudData[userHash];
+            if (!userData) {
+                return []; // New user, no data yet
+            }
+            
+            // Security check: verify username matches
+            if (userData.username !== this.currentUser) {
+                return []; // Data integrity violation
+            }
+            
+            return userData.links || [];
+            
         } catch (error) {
-            console.error('❌ Cloud load error:', error);
             return [];
         }
     }
 
     async saveLinks(data) {
-        console.log('☁️ Saving', data.length, 'links directly to cloud');
-        
-        // Check if user is logged in
+        // Validate user is logged in
         if (!this.currentUser) {
             this.showStatus('❌ Please login to save links', 'error');
             return false;
         }
         
-        // Save directly to cloud only
+        // Attempt cloud save
         const success = await this.saveLinksToCloud(data);
         
         if (success) {
@@ -441,19 +428,15 @@ class LinksApp {
     }
 
     async loadLinks() {
-        console.log('☁️ Loading links from cloud only');
-        
         if (!this.currentUser) {
-            console.log('⚠️ No user logged in, showing empty list');
             this.links = [];
             this.renderLinks();
             return;
         }
         
-        // Load only from cloud
+        // Load from cloud
         const cloudData = await this.loadLinksFromCloud();
         this.links = cloudData;
-        console.log('📥 Loaded', this.links.length, 'links from cloud');
         this.renderLinks();
     }
 
@@ -529,34 +512,48 @@ class LinksApp {
             timestamp: new Date().toISOString()
         };
         
-        this.links.unshift(newLink);
-        await this.saveLinks(this.links);
+        // Try to save to cloud first
+        const tempLinks = [...this.links, newLink];
+        const saveSuccess = await this.saveLinks(tempLinks);
         
-        // Clear form and reset button
-        urlInput.value = '';
-        titleInput.value = '';
-        categoryInput.value = '';
-        urlInput.focus();
+        if (saveSuccess) {
+            // Only update local array if cloud save succeeded
+            this.links.unshift(newLink);
+            this.renderLinks();
+            
+            // Clear form
+            urlInput.value = '';
+            titleInput.value = '';
+            categoryInput.value = '';
+            urlInput.focus();
+        }
         
+        // Reset button state
         addBtn.classList.remove('loading');
         addBtn.disabled = false;
         addBtn.textContent = 'Save';
-        
-        this.renderLinks();
     }
 
     async deleteLink(id) {
-        const originalLength = this.links.length;
-        this.links = this.links.filter(link => link.id !== id);
+        const linkIndex = this.links.findIndex(link => link.id === id);
         
-        if (originalLength === this.links.length) {
+        if (linkIndex === -1) {
             this.showStatus('Link not found', 'error');
             return;
         }
         
-        await this.saveLinks(this.links);
-        this.renderLinks();
-        this.showStatus('Link removed', 'success');
+        // Create new array without the deleted link
+        const updatedLinks = this.links.filter(link => link.id !== id);
+        
+        // Try to save to cloud first
+        const saveSuccess = await this.saveLinks(updatedLinks);
+        
+        if (saveSuccess) {
+            // Only update local array if cloud save succeeded
+            this.links = updatedLinks;
+            this.renderLinks();
+            this.showStatus('Link removed', 'success');
+        }
     }
 
     async copyLink(url) {
@@ -672,7 +669,7 @@ class LinksApp {
                 
                 if (!userExists) {
                     // Auto-redirect to signup
-                    console.log(`User ${username} not found, auto-redirecting to signup`);
+
                     this.showStatus('User not found. Redirecting to signup...', 'error');
                     
                     // Auto-switch to signup mode
@@ -692,7 +689,7 @@ class LinksApp {
                 const isAuthenticated = await this.authenticateUser(username, password);
                 
                 if (isAuthenticated) {
-                    console.log(`User ${username} authenticated, loading home with links`);
+
                     await this.loginUser(username); // This will auto-load links from cloud
                     this.showStatus('Welcome back! Loading your links...', 'success');
                 } else {
@@ -700,11 +697,11 @@ class LinksApp {
                 }
             } else {
                 // Signup mode - create new user
-                console.log(`Creating new user: ${username}`);
+
                 const cloudSuccess = await this.createUser(username, password);
                 
                 // Auto-redirect to home (new user = empty links)
-                console.log(`New user ${username} created, redirecting to home`);
+
                 await this.loginUser(username); // This will load empty links (new user)
                 
                 this.showStatus(
@@ -713,7 +710,7 @@ class LinksApp {
                 );
             }
         } catch (error) {
-            console.error('Authentication error:', error);
+
             this.showStatus(error.message || 'Authentication failed', 'error');
         } finally {
             submitBtn.disabled = false;
