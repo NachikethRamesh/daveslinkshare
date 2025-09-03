@@ -98,18 +98,42 @@ const noticePage = `<!DOCTYPE html>
 fs.writeFileSync(path.join(distDir, 'index.html'), noticePage);
 console.log('✅ Created setup notice page');
 
-// Create _redirects file for SPA routing
-const redirectsContent = `# Cloudflare Pages redirects
-/*    /index.html   200
-`;
+// Copy _redirects file for SPA routing
+const redirectsPath = path.join(__dirname, '_redirects');
+if (fs.existsSync(redirectsPath)) {
+    fs.copyFileSync(redirectsPath, path.join(distDir, '_redirects'));
+    console.log('✅ Copied _redirects file');
+}
 
-fs.writeFileSync(path.join(distDir, '_redirects'), redirectsContent);
-console.log('✅ Created _redirects file');
+// Copy _headers file
+const headersPath = path.join(__dirname, '_headers');
+if (fs.existsSync(headersPath)) {
+    fs.copyFileSync(headersPath, path.join(distDir, '_headers'));
+    console.log('✅ Copied _headers file');
+}
 
-// Create functions directory for serverless functions
-const functionsDir = path.join(distDir, 'functions');
-if (!fs.existsSync(functionsDir)) {
-    fs.mkdirSync(functionsDir, { recursive: true });
+// Copy functions directory for Cloudflare Pages Functions
+const functionsSourceDir = path.join(__dirname, 'functions');
+const functionsDestDir = path.join(distDir, 'functions');
+if (fs.existsSync(functionsSourceDir)) {
+    // Copy entire functions directory
+    const copyRecursive = (src, dest) => {
+        if (!fs.existsSync(dest)) {
+            fs.mkdirSync(dest, { recursive: true });
+        }
+        const entries = fs.readdirSync(src, { withFileTypes: true });
+        for (const entry of entries) {
+            const srcPath = path.join(src, entry.name);
+            const destPath = path.join(dest, entry.name);
+            if (entry.isDirectory()) {
+                copyRecursive(srcPath, destPath);
+            } else {
+                fs.copyFileSync(srcPath, destPath);
+            }
+        }
+    };
+    copyRecursive(functionsSourceDir, functionsDestDir);
+    console.log('✅ Copied functions directory');
 }
 
 console.log('🎉 Build complete! Deploy with: wrangler pages deploy dist');
