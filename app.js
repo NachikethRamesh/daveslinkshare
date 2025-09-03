@@ -17,8 +17,17 @@ class LinksApp {
     }
 
     checkConfiguration() {
-        this.isConfigured = CONFIG.BIN_ID !== 'YOUR_BIN_ID_HERE' && CONFIG.API_KEY !== 'YOUR_API_KEY_HERE';
-        this.isAuthConfigured = CONFIG.AUTH_BIN_ID !== 'YOUR_AUTH_BIN_ID_HERE' && CONFIG.API_KEY !== 'YOUR_API_KEY_HERE';
+        this.isConfigured = CONFIG.BIN_ID && CONFIG.BIN_ID !== 'YOUR_BIN_ID_HERE' && 
+                           CONFIG.API_KEY && CONFIG.API_KEY !== 'YOUR_API_KEY_HERE';
+        this.isAuthConfigured = CONFIG.AUTH_BIN_ID && CONFIG.AUTH_BIN_ID !== 'YOUR_AUTH_BIN_ID_HERE' && 
+                               CONFIG.API_KEY && CONFIG.API_KEY !== 'YOUR_API_KEY_HERE';
+        
+        console.log('🔧 Configuration Check:');
+        console.log('  BIN_ID configured:', !!CONFIG.BIN_ID && CONFIG.BIN_ID !== 'YOUR_BIN_ID_HERE');
+        console.log('  AUTH_BIN_ID configured:', !!CONFIG.AUTH_BIN_ID && CONFIG.AUTH_BIN_ID !== 'YOUR_AUTH_BIN_ID_HERE');
+        console.log('  API_KEY configured:', !!CONFIG.API_KEY && CONFIG.API_KEY !== 'YOUR_API_KEY_HERE');
+        console.log('  isConfigured:', this.isConfigured);
+        console.log('  isAuthConfigured:', this.isAuthConfigured);
         
         if (!this.isConfigured && this.currentUser) {
             document.getElementById('configWarning').style.display = 'block';
@@ -338,7 +347,19 @@ class LinksApp {
     }
 
     async saveLinksToCloud(data) {
-        if (!this.requireAuth('save to cloud') || !this.isConfigured) return false;
+        console.log('💾 saveLinksToCloud called with', data.length, 'links');
+        console.log('  currentUser:', this.currentUser);
+        console.log('  isConfigured:', this.isConfigured);
+        
+        if (!this.requireAuth('save to cloud')) {
+            console.error('❌ Auth check failed');
+            return false;
+        }
+        
+        if (!this.isConfigured) {
+            console.error('❌ Not configured - BIN_ID or API_KEY missing');
+            return false;
+        }
         
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
@@ -346,6 +367,8 @@ class LinksApp {
             return false;
         }
 
+        console.log('📤 Saving to cloud with user hash:', userHash);
+        
         const existingData = await this.makeCloudRequest(CONFIG.BIN_ID) || {};
         existingData[userHash] = {
             username: this.currentUser,
@@ -353,7 +376,9 @@ class LinksApp {
             lastUpdated: new Date().toISOString()
         };
         
-        return await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
+        const success = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
+        console.log(success ? '✅ Cloud save successful' : '❌ Cloud save failed');
+        return success;
     }
 
     async loadLinksFromCloud() {
@@ -378,13 +403,17 @@ class LinksApp {
     }
 
     async saveLinks(data) {
+        console.log('💾 saveLinks called with', data.length, 'links');
+        
         this.saveLinksLocally(data);
         
         if (this.isConfigured) {
+            console.log('📤 Attempting cloud save...');
             const success = await this.saveLinksToCloud(data);
-            this.showStatus(success ? 'Saved to cloud' : 'Saved locally', success ? 'success' : 'error');
+            this.showStatus(success ? 'Saved to cloud' : 'Saved locally only', success ? 'success' : 'error');
         } else {
-            this.showStatus('Saved', 'success');
+            console.log('⚠️ Cloud not configured, saving locally only');
+            this.showStatus('Saved locally only', 'success');
         }
     }
 
