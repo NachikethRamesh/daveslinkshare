@@ -25,8 +25,32 @@ class LinksApp {
         }
     }
 
-    // Utility Methods
-    hashPassword(password) {
+    // Utility Methods - Cryptographic
+    async createSHA256Hash(input, salt = '') {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(input + salt);
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async hashPassword(password) {
+        return await this.createSHA256Hash(password, 'davelinks_salt_2024');
+    }
+
+    async generateUserHash(username, timestamp) {
+        const entropy = [
+            username, timestamp, Date.now().toString(), Math.random().toString(36),
+            crypto.getRandomValues(new Uint8Array(16)).toString(),
+            navigator.userAgent.slice(-20), 'davelinks_user_salt_2024'
+        ].join('|');
+        
+        const fullHash = await this.createSHA256Hash(entropy);
+        return fullHash.substring(0, 16);
+    }
+
+    // Legacy hash method for backward compatibility
+    hashPasswordLegacy(password) {
         let hash = 0;
         for (let i = 0; i < password.length; i++) {
             const char = password.charCodeAt(i);
@@ -36,41 +60,22 @@ class LinksApp {
         return hash.toString();
     }
 
-    generateUserHash(username, timestamp) {
-        // Create a unique hash combining username and creation timestamp
-        const combined = username + timestamp + Math.random().toString(36);
-        let hash = 0;
-        for (let i = 0; i < combined.length; i++) {
-            const char = combined.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char;
-            hash = hash & hash;
-        }
-        return Math.abs(hash).toString(36).substring(0, 8); // 8-character unique ID
-    }
 
-    isValidUrl(string) {
-        try {
-            new URL(string);
-            return true;
-        } catch (_) {
-            return false;
-        }
-    }
 
-    extractTitleFromUrl(url) {
+
+
+    // Utility Methods - General
+    processUrl(url) {
         try {
-            const domain = new URL(url).hostname.replace('www.', '');
-            return domain.charAt(0).toUpperCase() + domain.slice(1);
+            const urlObj = new URL(url);
+            const domain = urlObj.hostname.replace('www.', '');
+            return {
+                domain,
+                title: domain.charAt(0).toUpperCase() + domain.slice(1),
+                isValid: true
+            };
         } catch {
-            return url;
-        }
-    }
-
-    getDomainFromUrl(url) {
-        try {
-            return new URL(url).hostname.replace('www.', '');
-        } catch {
-            return url;
+            return { domain: url, title: url, isValid: false };
         }
     }
 
@@ -112,8 +117,6 @@ class LinksApp {
     // Cloud API Methods
     async makeCloudRequest(binId, method = 'GET', data = null) {
         try {
-            console.log(`🌐 Making ${method} request to bin: ${binId}`);
-            
             const options = {
                 method,
                 headers: {
@@ -124,23 +127,18 @@ class LinksApp {
 
             if (data && method !== 'GET') {
                 options.body = JSON.stringify(data);
-                console.log(`📤 Sending data:`, Object.keys(data));
             }
 
             const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, options);
             
             if (!response.ok) {
-                const errorText = await response.text();
-                console.error(`❌ HTTP ${response.status}: ${errorText}`);
-                throw new Error(`HTTP ${response.status}: ${errorText}`);
+                throw new Error(`HTTP ${response.status}`);
             }
 
             const result = await response.json();
-            console.log(`✅ ${method} request successful`);
-            
             return method === 'GET' ? result.record : true;
         } catch (error) {
-            console.error(`❌ Cloud ${method} failed:`, error);
+            console.error(`Cloud ${method} failed for ${binId}:`, error.message);
             return null;
         }
     }
@@ -185,17 +183,19 @@ class LinksApp {
         }
 
         const createdAt = new Date().toISOString();
-        const userHash = this.generateUserHash(username, createdAt);
+        const userHash = await this.generateUserHash(username, createdAt);
+        const hashedPassword = await this.hashPassword(password);
 
         users[username] = {
-            password: this.hashPassword(password),
+            password: hashedPassword,
             userHash: userHash,
+            hashVersion: 2, // Mark as new strong hash version
             createdAt: createdAt,
             lastLogin: createdAt
         };
 
         const cloudSuccess = await this.saveUsers(users);
-        console.log(`Created user ${username} with hash: ${userHash}`);
+        console.log(`Created user ${username} with strong hash: ${userHash}`);
         return cloudSuccess;
     }
 
@@ -203,7 +203,35 @@ class LinksApp {
         const users = await this.fetchUsers();
         const user = users[username];
         
-        if (user && user.password === this.hashPassword(password)) {
+        if (!user) return false;
+        
+        let passwordMatches = false;
+        
+        // Check if user has new strong hash (version 2) or legacy hash
+        if (user.hashVersion === 2) {
+            // Use new strong hash method
+            const hashedPassword = await this.hashPassword(password);
+            passwordMatches = user.password === hashedPassword;
+        } else {
+            // Use legacy hash method for backward compatibility
+            const legacyHash = this.hashPasswordLegacy(password);
+            passwordMatches = user.password === legacyHash;
+            
+            // Upgrade user to new hash system on successful login
+            if (passwordMatches) {
+                console.log(`Upgrading user ${username} to strong hash system`);
+                user.password = await this.hashPassword(password);
+                user.hashVersion = 2;
+                
+                // Generate new strong user hash if missing
+                if (!user.userHash || user.userHash.length < 16) {
+                    user.userHash = await this.generateUserHash(username, user.createdAt || new Date().toISOString());
+                    console.log(`Generated new strong user hash: ${user.userHash}`);
+                }
+            }
+        }
+        
+        if (passwordMatches) {
             // Update last login
             user.lastLogin = new Date().toISOString();
             await this.saveUsers(users);
@@ -211,6 +239,11 @@ class LinksApp {
         }
         
         return false;
+    }
+
+    async checkUserExists(username) {
+        const users = await this.fetchUsers();
+        return users.hasOwnProperty(username);
     }
 
     // Session Management
@@ -222,7 +255,7 @@ class LinksApp {
         return user?.userHash || null;
     }
 
-    loginUser(username) {
+    loginUser(username, isNewUser = false) {
         this.currentUser = username;
         localStorage.setItem('daveLinksCurrentUser', username);
         
@@ -236,7 +269,15 @@ class LinksApp {
         }
         
         document.getElementById('url').focus();
-        this.loadLinks();
+        
+        if (isNewUser) {
+            // New user starts with empty list
+            this.links = [];
+            this.renderLinks();
+            console.log(`New user ${username} starting with empty links list`);
+        } else {
+            this.loadLinks();
+        }
     }
 
     logoutUser() {
@@ -253,10 +294,19 @@ class LinksApp {
         this.renderLinks();
     }
 
-    checkExistingSession() {
+    async checkExistingSession() {
         const savedUser = localStorage.getItem('daveLinksCurrentUser');
         if (savedUser) {
-            this.loginUser(savedUser);
+            // Verify user still exists in AUTH_BIN before logging them in
+            const userExists = await this.checkUserExists(savedUser);
+            if (userExists) {
+                this.loginUser(savedUser);
+            } else {
+                // User was deleted from AUTH_BIN, clear local session
+                console.log(`User ${savedUser} no longer exists in AUTH_BIN, clearing session`);
+                localStorage.removeItem('daveLinksCurrentUser');
+                this.showStatus('Session expired. Please login again.', 'error');
+            }
         }
     }
 
@@ -265,65 +315,66 @@ class LinksApp {
         return `daveLinks_${this.currentUser}`;
     }
 
+    requireAuth(operation) {
+        if (!this.currentUser) {
+            console.error(`❌ Cannot ${operation}: No authenticated user`);
+            return false;
+        }
+        return true;
+    }
+
     saveLinksLocally(data) {
-        if (!this.currentUser) return;
-        localStorage.setItem(this.getUserStorageKey(), JSON.stringify(data));
+        if (!this.requireAuth('save links locally')) return;
+        
+        const key = this.getUserStorageKey();
+        localStorage.setItem(key, JSON.stringify(data));
     }
 
     loadLinksLocally() {
-        if (!this.currentUser) return [];
-        return JSON.parse(localStorage.getItem(this.getUserStorageKey()) || '[]');
+        if (!this.requireAuth('load links locally')) return [];
+        
+        const key = this.getUserStorageKey();
+        return JSON.parse(localStorage.getItem(key) || '[]');
     }
 
     async saveLinksToCloud(data) {
-        if (!this.isConfigured) {
-            console.log('❌ Links bin not configured');
-            return false;
-        }
+        if (!this.requireAuth('save to cloud') || !this.isConfigured) return false;
         
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
-            console.log('❌ Could not get user hash');
+            console.error('❌ Could not get user hash');
             return false;
         }
 
-        console.log(`💾 Saving ${data.length} links to cloud for user hash: ${userHash}`);
-        
-        // Get existing cloud data first
         const existingData = await this.makeCloudRequest(CONFIG.BIN_ID) || {};
-        
-        // Update with user's links
         existingData[userHash] = {
             username: this.currentUser,
             links: data,
             lastUpdated: new Date().toISOString()
         };
         
-        const success = await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
-        console.log(success ? '✅ Links saved to cloud successfully' : '❌ Failed to save links to cloud');
-        
-        return success;
+        return await this.makeCloudRequest(CONFIG.BIN_ID, 'PUT', existingData) !== null;
     }
 
     async loadLinksFromCloud() {
-        if (!this.isConfigured) {
-            console.log('❌ Links bin not configured');
-            return [];
-        }
+        if (!this.requireAuth('load from cloud') || !this.isConfigured) return [];
         
         const userHash = await this.getCurrentUserHash();
         if (!userHash) {
-            console.log('❌ Could not get user hash');
+            console.error('❌ Could not get user hash');
             return [];
         }
 
-        console.log(`📥 Loading links from cloud for user hash: ${userHash}`);
-        
         const cloudData = await this.makeCloudRequest(CONFIG.BIN_ID);
-        const userLinks = cloudData?.[userHash]?.links || [];
+        const userData = cloudData?.[userHash];
         
-        console.log(`📥 Loaded ${userLinks.length} links from cloud`);
-        return userLinks;
+        // Security check: verify username matches
+        if (userData && userData.username !== this.currentUser) {
+            console.error(`❌ Security violation: Hash mismatch`);
+            return [];
+        }
+        
+        return userData?.links || [];
     }
 
     async saveLinks(data) {
@@ -372,7 +423,7 @@ class LinksApp {
                 <div class="link-favicon"></div>
                 <div class="link-content">
                     <h3 class="link-title">${this.escapeHtml(link.title)}</h3>
-                    <a href="${link.url}" target="_blank" class="link-url">${this.getDomainFromUrl(link.url)}</a>
+                    <a href="${link.url}" target="_blank" class="link-url">${this.processUrl(link.url).domain}</a>
                     <div class="link-meta">
                         <span class="link-time">${this.timeAgo(link.timestamp)}</span>
                         ${link.category ? `<span class="link-category">${this.escapeHtml(link.category)}</span>` : ''}
@@ -405,7 +456,8 @@ class LinksApp {
             return;
         }
 
-        if (!this.isValidUrl(url)) {
+        const urlInfo = this.processUrl(url);
+        if (!urlInfo.isValid) {
             this.showStatus('Please enter a valid URL', 'error');
             return;
         }
@@ -418,7 +470,7 @@ class LinksApp {
         const newLink = {
             id: Date.now().toString(),
             url,
-            title: title || this.extractTitleFromUrl(url),
+            title: title || urlInfo.title,
             category: selectedCategory || null,
             timestamp: new Date().toISOString()
         };
@@ -529,24 +581,28 @@ class LinksApp {
         });
     }
 
+    validateAuthInput(username, password) {
+        if (!username || !password) {
+            return 'Please fill in all fields';
+        }
+        if (username.length < 3) {
+            return 'Username must be at least 3 characters';
+        }
+        if (password.length < 6) {
+            return 'Password must be at least 6 characters';
+        }
+        return null;
+    }
+
     async handleAuth() {
         const username = document.getElementById('username').value.trim();
         const password = document.getElementById('password').value;
         const submitBtn = document.getElementById('authSubmit');
         
         // Validation
-        if (!username || !password) {
-            this.showStatus('Please fill in all fields', 'error');
-            return;
-        }
-
-        if (username.length < 3) {
-            this.showStatus('Username must be at least 3 characters', 'error');
-            return;
-        }
-
-        if (password.length < 6) {
-            this.showStatus('Password must be at least 6 characters', 'error');
+        const validationError = this.validateAuthInput(username, password);
+        if (validationError) {
+            this.showStatus(validationError, 'error');
             return;
         }
 
@@ -557,13 +613,30 @@ class LinksApp {
         
         try {
             if (this.isLoginMode) {
+                // First check if user exists
+                const userExists = await this.checkUserExists(username);
+                
+                if (!userExists) {
+                    // User doesn't exist, redirect to sign up
+                    this.showStatus('User not found. Please sign up first.', 'error');
+                    setTimeout(() => {
+                        this.isLoginMode = false;
+                        this.toggleAuthMode();
+                        // Pre-fill the username
+                        document.getElementById('username').value = username;
+                        document.getElementById('password').value = '';
+                        document.getElementById('password').focus();
+                    }, 1500);
+                    return;
+                }
+                
                 const isAuthenticated = await this.authenticateUser(username, password);
                 
                 if (isAuthenticated) {
                     this.loginUser(username);
                     this.showStatus('Welcome back!', 'success');
                 } else {
-                    this.showStatus('Invalid username or password', 'error');
+                    this.showStatus('Invalid password', 'error');
                 }
             } else {
                 const cloudSuccess = await this.createUser(username, password);
