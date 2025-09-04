@@ -2738,7 +2738,7 @@ class LinksApp {
         }
 
         try {
-            const result = await this.apiRequest(`/links?id=${linkId}`, {
+            const result = await this.apiRequest('/links?id=' + linkId, {
                 method: 'DELETE'
             });
 

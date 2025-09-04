@@ -271,7 +271,10 @@ class LinksApp {
             return;
         }
 
-        const linksHTML = this.links.map(link => `
+        // Sort links by timestamp (newest first)
+        const sortedLinks = this.links.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const linksHTML = sortedLinks.map(link => `
             <div class="link-item" data-id="${link.id}">
                 <div class="link-content">
                     <div class="link-header">
