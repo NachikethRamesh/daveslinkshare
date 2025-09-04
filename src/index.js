@@ -319,7 +319,7 @@ function getIndexHTML() {
 }
 
 function getStylesCSS() {
-  return \`/* CSS content would go here - simplified for now */
+  return `/* CSS content would go here - simplified for now */
 body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 0; }
 .auth-container { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f5f5f5; }
 .auth-card { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
@@ -337,11 +337,11 @@ body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-
 .sidebar { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .content-area { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 .empty-state { text-align: center; padding: 3rem 1rem; color: #666; }
-.alert { position: fixed; top: 1rem; right: 1rem; padding: 1rem; border-radius: 4px; z-index: 1000; }\`;
+.alert { position: fixed; top: 1rem; right: 1rem; padding: 1rem; border-radius: 4px; z-index: 1000; }`;
 }
 
 function getAppJS() {
-  return \`// Simplified app.js for Workers deployment
+  return `// Simplified app.js for Workers deployment
 class LinksApp {
     constructor() {
         this.links = [];
@@ -358,11 +358,11 @@ class LinksApp {
     }
 
     async apiRequest(endpoint, options = {}) {
-        const url = \\\`\\\${this.apiBase}\\\${endpoint}\\\`;
+        const url = \`\${this.apiBase}\${endpoint}\`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
-                ...(this.token && { 'Authorization': \\\`Bearer \\\${this.token}\\\` })
+                ...(this.token && { 'Authorization': \`Bearer \${this.token}\` })
             }
         };
 
@@ -385,13 +385,13 @@ class LinksApp {
             } else {
                 const text = await response.text();
                 data = {
-                    error: response.ok ? 'Invalid response format' : \\\`HTTP \\\${response.status}: \\\${response.statusText}\\\`,
+                    error: response.ok ? 'Invalid response format' : \`HTTP \${response.status}: \${response.statusText}\`,
                     details: text.substring(0, 200)
                 };
             }
 
             if (!response.ok) {
-                throw new Error(data.error || \\\`HTTP \\\${response.status}: \\\${response.statusText}\\\`);
+                throw new Error(data.error || \`HTTP \${response.status}: \${response.statusText}\`);
             }
 
             return data;
@@ -458,7 +458,7 @@ class LinksApp {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
-            document.getElementById('userGreeting').textContent = \\\`\\\${this.currentUser.username}'s List\\\`;
+            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
         }
     }
 
@@ -481,7 +481,7 @@ class LinksApp {
     showStatus(message, type = 'info') {
         const statusEl = document.getElementById('status');
         statusEl.textContent = message;
-        statusEl.className = \\\`alert alert-\\\${type}\\\`;
+        statusEl.className = \`alert alert-\${type}\`;
         statusEl.style.display = 'block';
         
         setTimeout(() => {
@@ -498,5 +498,5 @@ class LinksApp {
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     new LinksApp();
-});\`;
+});`;
 }
