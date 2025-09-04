@@ -1764,7 +1764,7 @@ class LinksApp {
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
-            document.getElementById('userGreeting').textContent = `${this.currentUser.username}'s List`;
+            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
         }
         this.clearAddLinkForm(); // Clear form when showing main app
         
