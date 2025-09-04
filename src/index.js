@@ -412,12 +412,10 @@ async function handleLinks(request, env) {
   }
 
   const apiKey = env.JSONBIN_API_KEY;
-  const linksBinId = env.LINKS_BIN_ID;
+  const linksBinId = env.LINKS_BIN_ID || env.AUTH_BIN_ID; // Fallback to auth bin if links bin not configured
 
   if (!apiKey || !linksBinId) {
-    return new Response(JSON.stringify({
-      error: 'Server configuration error'
-    }), { status: 500, headers });
+    return createErrorResponse('Server configuration error', 500);
   }
 
   // Generate user hash for data isolation
@@ -426,31 +424,17 @@ async function handleLinks(request, env) {
   if (request.method === 'GET') {
     // Get user's links
     try {
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        }
-      });
+      const allData = await fetchFromBin(linksBinId, apiKey);
+      // For links, we use a "links" prefix to avoid conflicts with auth data
+      const userLinks = allData[`links_${userHash}`] || [];
 
-      if (!response.ok) {
-        return new Response(JSON.stringify({
-          error: 'Failed to fetch links'
-        }), { status: 503, headers });
-      }
-
-      const allData = await response.json();
-      const userLinks = allData[userHash] || [];
-
-      return new Response(JSON.stringify({
+      return createResponse({
         success: true,
         links: userLinks
-      }), { status: 200, headers });
+      });
 
     } catch (error) {
-      return new Response(JSON.stringify({
-        error: 'Failed to fetch links'
-      }), { status: 500, headers });
+      return createErrorResponse('Failed to fetch links', 500);
     }
   }
 
@@ -461,34 +445,25 @@ async function handleLinks(request, env) {
       const { url, title, category } = requestData;
 
       if (!url) {
-        return new Response(JSON.stringify({
-          error: 'URL is required'
-        }), { status: 400, headers });
+        return createErrorResponse('URL is required', 400);
       }
 
       // Validate URL format
       try {
         new URL(url);
       } catch (urlError) {
-        return new Response(JSON.stringify({
-          error: 'Invalid URL format'
-        }), { status: 400, headers });
+        return createErrorResponse('Invalid URL format', 400);
       }
 
       // Get existing data
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        }
-      });
-
       let allData = {};
-      if (response.ok) {
-        allData = await response.json();
+      try {
+        allData = await fetchFromBin(linksBinId, apiKey);
+      } catch (error) {
+        // If bin doesn't exist, that's fine - we'll create it
       }
 
-      const userLinks = allData[userHash] || [];
+      const userLinks = allData[`links_${userHash}`] || [];
       
       // Create new link object
       const newLink = {
@@ -506,35 +481,23 @@ async function handleLinks(request, env) {
       // Update the bin
       const updatedData = {
         ...allData,
-        [userHash]: updatedUserLinks
+        [`links_${userHash}`]: updatedUserLinks
       };
 
-      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        },
-        body: JSON.stringify(updatedData)
-      });
-
-      if (!updateResponse.ok) {
-        return new Response(JSON.stringify({
-          error: 'Failed to save link'
-        }), { status: 503, headers });
+      try {
+        await updateBin(linksBinId, apiKey, updatedData);
+      } catch (error) {
+        return createErrorResponse('Failed to save link', 503);
       }
 
-      return new Response(JSON.stringify({
+      return createResponse({
         success: true,
         message: 'Link saved successfully',
         link: newLink
-      }), { status: 201, headers });
+      }, 201);
 
     } catch (error) {
-      return new Response(JSON.stringify({
-        error: 'Failed to add link'
-      }), { status: 500, headers });
+      return createErrorResponse('Failed to add link', 500);
     }
   }
 
@@ -545,27 +508,18 @@ async function handleLinks(request, env) {
       const linkId = url.searchParams.get('id');
 
       if (!linkId) {
-        return new Response(JSON.stringify({
-          error: 'Link ID is required'
-        }), { status: 400, headers });
+        return createErrorResponse('Link ID is required', 400);
       }
 
       // Get existing data
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        }
-      });
-
-      if (!response.ok) {
-        return new Response(JSON.stringify({
-          error: 'Failed to fetch links'
-        }), { status: 503, headers });
+      let allData;
+      try {
+        allData = await fetchFromBin(linksBinId, apiKey);
+      } catch (error) {
+        return createErrorResponse('Failed to fetch links', 503);
       }
 
-      const allData = await response.json();
-      const userLinks = allData[userHash] || [];
+      const userLinks = allData[`links_${userHash}`] || [];
       
       // Remove the link
       const updatedUserLinks = userLinks.filter(link => link.id !== linkId);
@@ -573,34 +527,22 @@ async function handleLinks(request, env) {
       // Update the bin
       const updatedData = {
         ...allData,
-        [userHash]: updatedUserLinks
+        [`links_${userHash}`]: updatedUserLinks
       };
 
-      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        },
-        body: JSON.stringify(updatedData)
-      });
-
-      if (!updateResponse.ok) {
-        return new Response(JSON.stringify({
-          error: 'Failed to delete link'
-        }), { status: 503, headers });
+      try {
+        await updateBin(linksBinId, apiKey, updatedData);
+      } catch (error) {
+        return createErrorResponse('Failed to delete link', 503);
       }
 
-      return new Response(JSON.stringify({
+      return createResponse({
         success: true,
         message: 'Link deleted successfully'
-      }), { status: 200, headers });
+      });
 
     } catch (error) {
-      return new Response(JSON.stringify({
-        error: 'Failed to delete link'
-      }), { status: 500, headers });
+      return createErrorResponse('Failed to delete link', 500);
     }
   }
 
@@ -664,7 +606,7 @@ async function handleHealth(request, env) {
     version: '1.0.0',
     environment: {
       hasApiKey: !!env.JSONBIN_API_KEY,
-      hasLinksBin: !!env.LINKS_BIN_ID,
+      hasLinksBin: !!(env.LINKS_BIN_ID || env.AUTH_BIN_ID),
       hasAuthBin: !!env.AUTH_BIN_ID,
       hasJwtSecret: !!env.JWT_SECRET
     },
@@ -1626,6 +1568,18 @@ class LinksApp {
         if (this.currentUser) {
             document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
         }
+        this.clearAddLinkForm(); // Clear form when showing main app
+    }
+
+    clearAddLinkForm() {
+        // Clear all form fields
+        document.getElementById('addLinkForm').reset();
+        
+        // Ensure category dropdown is reset to default
+        const categorySelect = document.getElementById('category');
+        if (categorySelect) {
+            categorySelect.selectedIndex = 0;
+        }
     }
 
     async handlePasswordReset(event) {
@@ -1776,7 +1730,7 @@ class LinksApp {
 
             if (result.success) {
                 this.showStatus('Link saved successfully!', 'success');
-                document.getElementById('addLinkForm').reset();
+                this.clearAddLinkForm(); // Clear form after successful save
                 await this.loadLinks(); // Refresh the links list
             } else {
                 this.showStatus(result.error || 'Failed to save link', 'error');
