@@ -1561,42 +1561,402 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 }
 
-/* Mobile phones */
+/* Mobile phones - Pocket-inspired design */
 @media (max-width: 480px) {
     body {
-        font-size: 14px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        background: #f5f5f7;
+        color: #1c1c1e;
+        font-size: 15px;
+        line-height: 1.4;
     }
 
+    /* Pocket-style auth card */
     .auth-card {
-        padding: 24px 16px;
-        margin: 12px;
-        border-radius: 12px;
+        background: #ffffff;
+        padding: 32px 20px;
+        margin: 16px 12px;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
+    /* Pocket-style main layout */
     .main-content {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 20px;
         padding: 0 12px;
     }
 
+    /* Pocket-style sidebar (Add Link section) */
     .sidebar {
         position: static;
-        order: 2;
+        order: 1; /* Add Link section appears first */
         width: 100%;
-        padding: 16px;
+        background: #ffffff;
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .sidebar-header {
         margin-bottom: 16px;
     }
 
+    .sidebar-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #1c1c1e;
+        margin: 0;
+    }
+
     .content-area {
-        order: 1;
+        order: 2; /* My Links section appears second */
     }
 
     .header-content {
-        padding: 12px 16px;
+        padding: 16px 12px;
+        background: #ffffff;
+        margin: 16px 12px 0;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
     }
 
     .container {
+        padding: 20px 12px;
+        background: #ffffff;
+        margin: 0 12px 16px;
+        border-radius: 16px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    /* Pocket-style typography */
+    .app-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1c1c1e;
+        letter-spacing: -0.02em;
+    }
+
+    .auth-title {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1c1c1e;
+        margin-bottom: 8px;
+        letter-spacing: -0.02em;
+    }
+
+    .auth-subtitle {
+        font-size: 16px;
+        color: #86868b;
+        margin-bottom: 24px;
+    }
+
+    .content-title {
+        font-size: 20px;
+        font-weight: 600;
+        color: #1c1c1e;
+        margin-bottom: 16px;
+        letter-spacing: -0.02em;
+    }
+
+    /* Pocket-style link items (card-based) */
+    .link-item {
+        background: #ffffff;
+        border: 1px solid rgba(0, 0, 0, 0.05);
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: all 0.2s ease;
+    }
+
+    .link-item:hover {
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-color: rgba(0, 0, 0, 0.08);
+    }
+
+    .link-title {
+        font-size: 16px;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 8px;
+        color: #1c1c1e;
+    }
+
+    .link-title a {
+        color: #1c1c1e;
+        text-decoration: none;
+        font-weight: 600;
+    }
+
+    /* Hide the URL on mobile (Pocket style) */
+    .link-url {
+        display: none;
+    }
+
+    /* Pocket-style category tags */
+    .link-category {
+        font-size: 11px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border-radius: 6px;
+        background: #f2f2f7;
+        color: #636366;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    .link-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 13px;
+        color: #86868b;
+        margin-bottom: 8px;
+    }
+
+    .link-domain {
+        color: #636366;
+        font-weight: 500;
+    }
+
+    .link-date {
+        font-size: 13px;
+        color: #86868b;
+    }
+
+    /* Pocket-style form elements */
+    .form-group {
+        margin-bottom: 16px;
+    }
+
+    .form-input, .form-select {
+        width: 100%;
         padding: 16px 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        border: 2px solid #e5e5ea;
+        border-radius: 12px;
+        background: #ffffff;
+        color: #1c1c1e;
+        transition: border-color 0.2s ease;
+    }
+
+    .form-input:focus, .form-select:focus {
+        outline: none;
+        border-color: #007aff;
+        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+    }
+
+    .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 16px 20px;
+        font-size: 16px;
+        font-weight: 600;
+        border-radius: 12px;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        min-height: 44px;
+    }
+
+    .btn-primary {
+        background: #007aff;
+        color: #ffffff;
+        font-weight: 600;
+        padding: 16px 24px;
+        min-height: 48px;
+    }
+
+    .btn-primary:hover {
+        background: #0056cc;
+    }
+
+    .btn-primary:active {
+        background: #004299;
+    }
+
+    /* Pocket-style action buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 12px 16px;
+        font-size: 14px;
+        font-weight: 500;
+        border-radius: 10px;
+        border: 1px solid #e5e5ea;
+        background: #ffffff;
+        color: #007aff;
+        min-height: 40px;
+        min-width: 80px;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        background: #f2f2f7;
+        border-color: #d1d1d6;
+    }
+
+    .action-btn:active {
+        background: #e5e5ea;
+    }
+
+    .copy-btn {
+        background: #34c759;
+        color: #ffffff;
+        border-color: #34c759;
+    }
+
+    .copy-btn:hover {
+        background: #28a745;
+        border-color: #28a745;
+    }
+
+    .delete-btn {
+        background: #ff3b30;
+        color: #ffffff;
+        border-color: #ff3b30;
+    }
+
+    .delete-btn:hover {
+        background: #d63027;
+        border-color: #d63027;
+    }
+
+    /* Stack action buttons vertically (Pocket style) */
+    .link-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        margin-top: 12px;
+    }
+
+    .link-actions .action-btn {
+        width: 100%;
+        justify-content: center;
+        font-weight: 600;
+    }
+
+    /* Pocket-style empty state */
+    .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: #86868b;
+    }
+
+    .empty-title {
+        font-size: 18px;
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #1c1c1e;
+    }
+
+    .empty-subtitle {
+        font-size: 15px;
+        color: #86868b;
+    }
+
+    /* Pocket-style links container */
+    .links-container {
+        padding: 0;
+    }
+
+    /* Pocket-style auth links */
+    .auth-toggle-link,
+    .reset-password-link,
+    .back-to-login-link {
+        color: #007aff;
+        text-decoration: none;
+        font-size: 15px;
+        font-weight: 500;
+        padding: 8px 4px;
+        border-radius: 6px;
+        transition: background-color 0.2s ease;
+    }
+
+    .auth-toggle-link:hover,
+    .reset-password-link:hover,
+    .back-to-login-link:hover {
+        background: rgba(0, 122, 255, 0.05);
+    }
+
+    /* Pocket-style pending indicator */
+    .pending-indicator {
+        background: #ff9500;
+        color: #ffffff;
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+        margin-left: 8px;
+    }
+}
+
+/* Extra small phones - Pocket-inspired design */
+@media (max-width: 320px) {
+    .auth-card {
+        padding: 24px 16px;
+        margin: 12px 8px;
+        border-radius: 14px;
+    }
+
+    .container {
+        padding: 16px 10px;
+        margin: 0 8px 12px;
+        border-radius: 14px;
+    }
+
+    .sidebar {
+        padding: 16px;
+        margin: 0 8px 16px;
+        border-radius: 14px;
+    }
+
+    .header-content {
+        margin: 12px 8px 0;
+        border-radius: 14px;
+    }
+
+    .link-item {
+        padding: 14px;
+        margin-bottom: 10px;
+        border-radius: 10px;
+    }
+
+    .link-title {
+        font-size: 15px;
+    }
+
+    .form-input, .form-select {
+        padding: 14px 10px;
+        border-radius: 10px;
+    }
+
+    .btn {
+        padding: 14px 18px;
+        border-radius: 10px;
+    }
+
+    .btn-primary {
+        padding: 14px 20px;
+    }
+
+    .action-btn {
+        padding: 10px 14px;
+        font-size: 13px;
+        min-width: 70px;
+        border-radius: 8px;
+        min-height: 38px;
     }
 
     .app-title {
@@ -1604,147 +1964,52 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .auth-title {
+        font-size: 26px;
+    }
+
+    .content-title {
+        font-size: 18px;
+    }
+}
+
+/* Landscape orientation adjustments - Pocket-inspired design */
+@media (max-height: 500px) and (orientation: landscape) {
+    .auth-card {
+        padding: 24px 20px;
+        margin: 12px auto;
+        border-radius: 14px;
+    }
+
+    .main-content {
+        gap: 16px;
+    }
+
+    .sidebar {
+        padding: 16px;
+        border-radius: 12px;
+    }
+
+    .container {
+        padding: 16px 12px;
+        border-radius: 12px;
+    }
+
+    .header-content {
+        padding: 12px 16px;
+        border-radius: 12px;
+    }
+
+    .link-item {
+        padding: 14px;
+        border-radius: 10px;
+    }
+
+    .auth-title {
         font-size: 24px;
     }
 
-    .auth-subtitle {
-        font-size: 14px;
-    }
-
-    .link-item {
-        padding: 12px;
-        margin-bottom: 10px;
-        border-radius: 8px;
-    }
-
-    .link-title {
-        font-size: 15px;
-        line-height: 1.3;
-    }
-
-    /* Hide the URL on mobile */
-    .link-url {
-        display: none;
-    }
-
-    /* Make category smaller */
-    .link-category {
-        font-size: 11px;
-        padding: 2px 6px;
-        border-radius: 4px;
-        background: var(--light-gray);
-        color: var(--text-secondary);
-    }
-
-    .link-meta {
-        font-size: 12px;
-    }
-
-    .link-date {
-        font-size: 12px;
-    }
-
-    .form-group {
-        margin-bottom: 14px;
-    }
-
-    .form-input, .form-select {
-        padding: 14px 12px;
-        font-size: 16px; /* Prevents zoom on iOS */
-        border-radius: 8px;
-    }
-
-    .btn {
-        padding: 14px 16px;
-        font-size: 16px;
-        border-radius: 8px;
-    }
-
-    .btn-primary {
-        padding: 16px 20px;
-        font-weight: 600;
-    }
-
-    .action-btn {
-        padding: 8px 12px;
-        font-size: 14px;
-        min-height: 36px;
-        min-width: 60px;
-    }
-
-    /* Stack action buttons vertically on mobile */
-    .link-actions {
-        flex-direction: column;
-        gap: 8px;
-        align-items: stretch;
-    }
-
-    .link-actions .action-btn {
-        width: 100%;
-        justify-content: center;
-    }
-
-    /* Better spacing for mobile */
-    .links-container {
-        padding: 8px 0;
-    }
-
-    /* Larger touch targets */
-    .auth-toggle-link,
-    .reset-password-link,
-    .back-to-login-link {
-        padding: 8px 4px;
-        font-size: 15px;
-    }
-}
-
-/* Extra small phones */
-@media (max-width: 320px) {
-    .auth-card {
-        padding: 20px 12px;
-        margin: 8px;
-    }
-    
-    .container {
-        padding: 12px 8px;
-    }
-    
-    .link-item {
-        padding: 10px;
-    }
-    
-    .form-input, .form-select, .btn {
-        padding: 12px 10px;
-    }
-    
-    .action-btn {
-        padding: 6px 10px;
-        font-size: 13px;
-        min-width: 55px;
-    }
-    
-    .app-title {
-        font-size: 16px;
-    }
-}
-
-/* Landscape orientation adjustments */
-@media (max-height: 500px) and (orientation: landscape) {
-    .auth-card {
-        padding: 20px;
-        margin: 10px auto;
-    }
-    
-    .main-content {
-        gap: 12px;
-    }
-    
-    .sidebar {
-        padding: 12px;
-    }
-    
-    .header-content {
-        padding: 8px 16px;
+    .content-title {
+        font-size: 18px;
     }
 }
 
