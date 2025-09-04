@@ -815,7 +815,7 @@ function getIndexHTML() {
         <header class="app-header">
             <div class="header-content">
                 <h1 class="app-title">
-                    🔗 <span id="userGreeting">My List</span>
+                    🔗 <span id="userGreeting">My Links</span>
                 </h1>
                 <button id="logoutBtn" class="logout-btn">Log out</button>
             </div>
@@ -875,12 +875,12 @@ function getIndexHTML() {
                 <!-- Content Area -->
                 <main class="content-area">
                     <div class="content-header">
-                        <h2 class="content-title">My List</h2>
+                        <h2 class="content-title">My Links</h2>
                     </div>
                     <div id="links" class="links-container">
                         <div class="empty-state">
                             <div class="empty-icon">📖</div>
-                            <div class="empty-title">Your reading list is empty</div>
+                            <div class="empty-title">Your links are empty</div>
                             <div class="empty-description">Save your first link to get started</div>
                         </div>
                     </div>
@@ -1253,6 +1253,17 @@ body {
     font-size: 16px;
     font-weight: 500;
     line-height: 1.4;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.link-url {
+    font-size: 12px;
+    color: var(--text-secondary);
+    font-family: monospace;
+    word-break: break-all;
+    opacity: 0.8;
 }
 
 .link-title a {
@@ -1555,7 +1566,7 @@ button:focus, input:focus, select:focus, textarea:focus {
     body {
         font-size: 14px;
     }
-    
+
     .auth-card {
         padding: 24px 16px;
         margin: 12px;
@@ -1591,72 +1602,93 @@ button:focus, input:focus, select:focus, textarea:focus {
     .app-title {
         font-size: 18px;
     }
-    
+
     .auth-title {
         font-size: 24px;
     }
-    
+
     .auth-subtitle {
         font-size: 14px;
     }
-    
+
     .link-item {
         padding: 12px;
         margin-bottom: 10px;
         border-radius: 8px;
     }
-    
+
     .link-title {
         font-size: 15px;
         line-height: 1.3;
     }
-    
+
+    /* Hide the URL on mobile */
+    .link-url {
+        display: none;
+    }
+
+    /* Make category smaller */
+    .link-category {
+        font-size: 11px;
+        padding: 2px 6px;
+        border-radius: 4px;
+        background: var(--light-gray);
+        color: var(--text-secondary);
+    }
+
     .link-meta {
         font-size: 12px;
     }
-    
+
     .link-date {
         font-size: 12px;
     }
-    
+
     .form-group {
         margin-bottom: 14px;
     }
-    
+
     .form-input, .form-select {
         padding: 14px 12px;
         font-size: 16px; /* Prevents zoom on iOS */
         border-radius: 8px;
     }
-    
+
     .btn {
         padding: 14px 16px;
         font-size: 16px;
         border-radius: 8px;
     }
-    
+
     .btn-primary {
         padding: 16px 20px;
         font-weight: 600;
     }
-    
+
     .action-btn {
         padding: 8px 12px;
         font-size: 14px;
         min-height: 36px;
         min-width: 60px;
     }
-    
+
+    /* Stack action buttons vertically on mobile */
     .link-actions {
+        flex-direction: column;
         gap: 8px;
-        flex-wrap: wrap;
+        align-items: stretch;
     }
-    
+
+    .link-actions .action-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
     /* Better spacing for mobile */
     .links-container {
         padding: 8px 0;
     }
-    
+
     /* Larger touch targets */
     .auth-toggle-link,
     .reset-password-link,
@@ -2026,7 +2058,7 @@ class LinksApp {
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
-            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
+            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s Links\`;
         }
         this.clearAddLinkForm(); // Clear form when showing main app
         
@@ -2328,7 +2360,7 @@ class LinksApp {
         if (this.links.length === 0) {
             linksContainer.innerHTML = \`
                 <div class="empty-state">
-                    <div class="empty-title">Your reading list is empty</div>
+                    <div class="empty-title">Your links are empty</div>
                     <div class="empty-description">Save your first link to get started</div>
                 </div>
             \`;
@@ -2340,6 +2372,7 @@ class LinksApp {
                 <div class="link-content">
                     <h3 class="link-title">
                         <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
+                        <span class="link-url">\${link.url}</span>
                         \${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
                     </h3>
                     <div class="link-meta">
