@@ -56,12 +56,22 @@ async function handleAuthLogin(request, env) {
       }
 
       const authData = await response.json();
-      const userExists = authData && authData[username];
+      const userData = authData && authData[username];
 
-      if (!userExists) {
+      if (!userData) {
         return new Response(JSON.stringify({
           error: 'Invalid credentials'
         }), { status: 401, headers });
+      }
+
+      // Verify password if user has hashed password
+      if (userData.password) {
+        const passwordHash = await generatePasswordHash(password);
+        if (userData.password !== passwordHash) {
+          return new Response(JSON.stringify({
+            error: 'Invalid credentials'
+          }), { status: 401, headers });
+        }
       }
 
       const token = btoa(JSON.stringify({ username, timestamp: Date.now() }));
@@ -84,6 +94,144 @@ async function handleAuthLogin(request, env) {
   return new Response(JSON.stringify({
     error: 'Method not allowed'
   }), { status: 405, headers });
+}
+
+async function handleAuthRegister(request, env) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
+  }
+
+  if (request.method === 'POST') {
+    try {
+      const requestData = await request.json();
+      const { username, password } = requestData;
+
+      if (!username || !password) {
+        return new Response(JSON.stringify({ 
+          error: 'Username and password required' 
+        }), { status: 400, headers });
+      }
+
+      // Basic validation
+      if (username.length < 3) {
+        return new Response(JSON.stringify({ 
+          error: 'Username must be at least 3 characters long' 
+        }), { status: 400, headers });
+      }
+
+      if (password.length < 6) {
+        return new Response(JSON.stringify({ 
+          error: 'Password must be at least 6 characters long' 
+        }), { status: 400, headers });
+      }
+
+      const apiKey = env.JSONBIN_API_KEY;
+      const authBinId = env.AUTH_BIN_ID;
+
+      if (!apiKey || !authBinId) {
+        return new Response(JSON.stringify({
+          error: 'Server configuration error'
+        }), { status: 500, headers });
+      }
+
+      // First, check if user already exists
+      const checkResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        }
+      });
+
+      if (!checkResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Authentication service error'
+        }), { status: 503, headers });
+      }
+
+      const existingData = await checkResponse.json();
+      
+      if (existingData && existingData[username]) {
+        return new Response(JSON.stringify({
+          error: 'Username already exists'
+        }), { status: 409, headers });
+      }
+
+      // Create user hash for password (simple hash for demo)
+      const passwordHash = await generatePasswordHash(password);
+      const userHash = await generateUserHash(username);
+
+      // Add new user to existing data
+      const updatedData = {
+        ...existingData,
+        [username]: {
+          password: passwordHash,
+          userHash: userHash,
+          created: new Date().toISOString()
+        }
+      };
+
+      // Update JSONBin with new user
+      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}`, {
+        method: 'PUT',
+        headers: {
+          'X-Master-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!updateResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to create user account'
+        }), { status: 503, headers });
+      }
+
+      // Generate token for immediate login
+      const token = btoa(JSON.stringify({ username, timestamp: Date.now() }));
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Account created successfully!',
+        user: { username },
+        token: token,
+        timestamp: new Date().toISOString()
+      }), { status: 201, headers });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ 
+        error: 'Internal server error' 
+      }), { status: 500, headers });
+    }
+  }
+
+  return new Response(JSON.stringify({
+    error: 'Method not allowed'
+  }), { status: 405, headers });
+}
+
+// Simple password hashing function
+async function generatePasswordHash(password) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password + 'salt_2025');
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Simple user hash function
+async function generateUserHash(username) {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(username + Date.now());
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
 }
 
 async function handleHealth(request, env) {
@@ -139,6 +287,10 @@ export default {
     // API Routes
     if (path.startsWith('/api/auth/login')) {
       return handleAuthLogin(request, env);
+    }
+
+    if (path.startsWith('/api/auth/register')) {
+      return handleAuthRegister(request, env);
     }
     
     if (path.startsWith('/api/health')) {
@@ -443,6 +595,19 @@ class LinksApp {
                     this.showMainApp();
                     this.showStatus('Login successful!', 'success');
                 }
+            } else {
+                const result = await this.apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({ username, password })
+                });
+
+                if (result.success) {
+                    this.token = result.token;
+                    this.currentUser = result.user;
+                    localStorage.setItem('authToken', this.token);
+                    this.showMainApp();
+                    this.showStatus('Account created successfully!', 'success');
+                }
             }
         } catch (error) {
             this.showStatus(error.message, 'error');
@@ -489,9 +654,49 @@ class LinksApp {
         }, 5000);
     }
 
+    switchToSignup() {
+        this.isLoginMode = false;
+        this.updateAuthUI();
+    }
+
+    switchToLogin() {
+        this.isLoginMode = true;
+        this.updateAuthUI();
+    }
+
+    updateAuthUI() {
+        const authTitle = document.getElementById('authTitle');
+        const authSubtitle = document.getElementById('authSubtitle');
+        const authSubmit = document.getElementById('authSubmit');
+        const authToggleText = document.getElementById('authToggleText');
+        const authToggleLink = document.getElementById('authToggleLink');
+
+        if (this.isLoginMode) {
+            authTitle.textContent = 'Welcome back';
+            authSubtitle.textContent = 'Sign in to your account';
+            authSubmit.textContent = 'Sign In';
+            authToggleText.textContent = "Don't have an account?";
+            authToggleLink.textContent = 'Sign up';
+        } else {
+            authTitle.textContent = 'Create Account';
+            authSubtitle.textContent = 'Sign up for a new account';
+            authSubmit.textContent = 'Sign Up';
+            authToggleText.textContent = 'Already have an account?';
+            authToggleLink.textContent = 'Sign in';
+        }
+    }
+
     setupEventListeners() {
         document.getElementById('authForm').addEventListener('submit', (e) => this.handleAuth(e));
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+        document.getElementById('authToggleLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.isLoginMode) {
+                this.switchToSignup();
+            } else {
+                this.switchToLogin();
+            }
+        });
     }
 }
 
