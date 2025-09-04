@@ -588,6 +588,7 @@ function getDomainFromUrl(url) {
   }
 }
 
+
 async function handleHealth(request, env) {
   const headers = {
     'Content-Type': 'application/json',
@@ -692,7 +693,11 @@ function getIndexHTML() {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <title>Dave's Links</title>
     <meta name="description" content="Save and organize your links like Pocket">
     <link rel="stylesheet" href="styles.css">
@@ -1415,26 +1420,160 @@ body {
     border: 1px solid var(--border);
 }
 
+/* Mobile Touch Optimizations */
+input, textarea, select, button {
+    /* Prevent zoom on iOS when focusing inputs */
+    font-size: 16px;
+    /* Better touch targets */
+    min-height: 44px;
+    /* Improve touch responsiveness */
+    touch-action: manipulation;
+}
+
+/* Better scrollable areas for mobile */
+.links-container {
+    /* Smooth scrolling on iOS */
+    -webkit-overflow-scrolling: touch;
+    /* Better momentum scrolling */
+    scroll-behavior: smooth;
+}
+
+/* Prevent text selection on UI elements */
+.btn, .action-btn, .auth-toggle-link {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    /* Remove tap highlight on mobile */
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Better focus states for accessibility */
+button:focus, input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--primary-red);
+    outline-offset: 2px;
+}
+
+/* Safe area adjustments for notched devices */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .header-content {
+        padding-top: calc(12px + env(safe-area-inset-top));
+    }
+    
+    .container {
+        padding-bottom: calc(16px + env(safe-area-inset-bottom));
+    }
+}
+
 /* Utility Classes */
 .hidden {
     display: none !important;
 }
 
 /* Responsive Design */
-@media (max-width: 768px) {
+
+/* Large tablets and small desktops */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .container {
+        max-width: 95%;
+        padding: 20px;
+    }
+    
+    .main-content {
+        gap: 20px;
+    }
+    
+    .sidebar {
+        width: 300px;
+    }
+    
+    .link-item {
+        padding: 16px;
+    }
+}
+
+/* Tablets (portrait) */
+@media (max-width: 768px) and (min-width: 481px) {
     .auth-card {
         padding: 32px 24px;
-        margin: 16px;
+        margin: 20px;
+        max-width: 400px;
     }
 
     .main-content {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 20px;
+        padding: 0 16px;
     }
 
     .sidebar {
         position: static;
         order: 2;
+        width: 100%;
+        max-width: none;
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+
+    .content-area {
+        order: 1;
+    }
+
+    .header-content {
+        padding: 16px 20px;
+    }
+
+    .container {
+        padding: 20px 16px;
+    }
+
+    .app-title {
+        font-size: 20px;
+    }
+    
+    .link-item {
+        padding: 16px;
+        margin-bottom: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 16px;
+    }
+    
+    .form-input, .form-select, .btn {
+        padding: 12px 16px;
+        font-size: 16px; /* Prevents zoom on iOS */
+    }
+    
+    .btn-primary {
+        padding: 14px 20px;
+    }
+}
+
+/* Mobile phones */
+@media (max-width: 480px) {
+    body {
+        font-size: 14px;
+    }
+    
+    .auth-card {
+        padding: 24px 16px;
+        margin: 12px;
+        border-radius: 12px;
+    }
+
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 0 12px;
+    }
+
+    .sidebar {
+        position: static;
+        order: 2;
+        width: 100%;
+        padding: 16px;
+        margin-bottom: 16px;
     }
 
     .content-area {
@@ -1446,11 +1585,134 @@ body {
     }
 
     .container {
-        padding: 16px;
+        padding: 16px 12px;
     }
 
     .app-title {
         font-size: 18px;
+    }
+    
+    .auth-title {
+        font-size: 24px;
+    }
+    
+    .auth-subtitle {
+        font-size: 14px;
+    }
+    
+    .link-item {
+        padding: 12px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+    }
+    
+    .link-title {
+        font-size: 15px;
+        line-height: 1.3;
+    }
+    
+    .link-meta {
+        font-size: 12px;
+    }
+    
+    .link-date {
+        font-size: 12px;
+    }
+    
+    .form-group {
+        margin-bottom: 14px;
+    }
+    
+    .form-input, .form-select {
+        padding: 14px 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        border-radius: 8px;
+    }
+    
+    .btn {
+        padding: 14px 16px;
+        font-size: 16px;
+        border-radius: 8px;
+    }
+    
+    .btn-primary {
+        padding: 16px 20px;
+        font-weight: 600;
+    }
+    
+    .action-btn {
+        padding: 8px 12px;
+        font-size: 14px;
+        min-height: 36px;
+        min-width: 60px;
+    }
+    
+    .link-actions {
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+    
+    /* Better spacing for mobile */
+    .links-container {
+        padding: 8px 0;
+    }
+    
+    /* Larger touch targets */
+    .auth-toggle-link,
+    .reset-password-link,
+    .back-to-login-link {
+        padding: 8px 4px;
+        font-size: 15px;
+    }
+}
+
+/* Extra small phones */
+@media (max-width: 320px) {
+    .auth-card {
+        padding: 20px 12px;
+        margin: 8px;
+    }
+    
+    .container {
+        padding: 12px 8px;
+    }
+    
+    .link-item {
+        padding: 10px;
+    }
+    
+    .form-input, .form-select, .btn {
+        padding: 12px 10px;
+    }
+    
+    .action-btn {
+        padding: 6px 10px;
+        font-size: 13px;
+        min-width: 55px;
+    }
+    
+    .app-title {
+        font-size: 16px;
+    }
+}
+
+/* Landscape orientation adjustments */
+@media (max-height: 500px) and (orientation: landscape) {
+    .auth-card {
+        padding: 20px;
+        margin: 10px auto;
+    }
+    
+    .main-content {
+        gap: 12px;
+    }
+    
+    .sidebar {
+        padding: 12px;
+    }
+    
+    .header-content {
+        padding: 8px 16px;
     }
 }
 
