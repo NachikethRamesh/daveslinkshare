@@ -1563,8 +1563,8 @@ class LinksApp {
                 break;
             case '/home':
             case '/dashboard':
-                // For direct navigation, show main app without async operations
-                this.showMainAppSync();
+                // For navigation after login, load links asynchronously
+                this.showMainApp();
                 break;
         }
     }
