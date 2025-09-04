@@ -5,8 +5,7 @@
   "main": "client/index.html",
   "scripts": {
     "build": "node build.js",
-    "deploy": "npm run build && wrangler pages deploy dist",
-    "test": "echo 'Tests not implemented yet'"
+    "deploy": "npm run build && wrangler pages deploy dist"
   },
   "keywords": [
     "link-sharing",
