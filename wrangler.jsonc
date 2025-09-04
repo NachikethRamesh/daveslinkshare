@@ -1,0 +1,19 @@
+{
+  "name": "daves-link-sharing-app",
+  "compatibility_date": "2025-09-03",
+  "assets": {
+    "directory": "./dist"
+  },
+  "env": {
+    "production": {
+      "vars": {
+        "NODE_ENV": "production",
+        "CLIENT_URL": "https://daveslinkshare.app",
+        "JSONBIN_API_KEY": "$2a$10$ny3GTPiENLtRJQfE9RmHb.DjGt06dQlR9QoyPShSzzXjSMWpL15f.",
+        "LINKS_BIN_ID": "68b7de25ae596e708fe0ea04",
+        "AUTH_BIN_ID": "68b7c443ae596e708fe0d657",
+        "JWT_SECRET": "5b452b847b8dd1d2b68af11b176dba87aef2753d59118b30dcab0a4853e48979b2590bfebce52071807ba666d303acb86b17ee0e9256e35082289cf0e420545a"
+      }
+    }
+  }
+}
