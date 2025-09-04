@@ -633,6 +633,7 @@ async function handleHealth(request, env) {
   }), { status: 200, headers });
 }
 
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -1577,6 +1578,9 @@ class LinksApp {
         document.getElementById('authContainer').classList.remove('hidden');
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.add('hidden');
+        
+        // Clear any existing links when showing auth screen
+        this.links = [];
     }
 
     showResetContainer() {
@@ -1585,7 +1589,7 @@ class LinksApp {
         document.getElementById('mainApp').classList.add('hidden');
     }
 
-    showMainApp() {
+    async showMainApp() {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
@@ -1593,6 +1597,11 @@ class LinksApp {
             document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
         }
         this.clearAddLinkForm(); // Clear form when showing main app
+        
+        // Clear previous user's links and load current user's links
+        this.links = [];
+        this.renderLinks(); // Show empty state immediately
+        await this.loadLinks(); // Load current user's links
     }
 
     clearAddLinkForm() {
@@ -1765,15 +1774,24 @@ class LinksApp {
     }
 
     async loadLinks() {
-        if (!this.token) {
+        if (!this.token || !this.currentUser) {
+            this.links = [];
+            this.renderLinks();
             return;
         }
 
         try {
             const result = await this.apiRequest('/links');
             if (result.success) {
-                this.links = result.links || [];
-                this.renderLinks();
+                // Double-check we still have the same user (prevent race conditions)
+                if (this.currentUser) {
+                    this.links = result.links || [];
+                    this.renderLinks();
+                } else {
+                    // User logged out while request was in progress
+                    this.links = [];
+                    this.renderLinks();
+                }
             } else {
                 this.showStatus(result.error || 'Failed to load links', 'error');
             }
