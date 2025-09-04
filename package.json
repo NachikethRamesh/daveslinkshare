@@ -4,7 +4,8 @@
   "description": "A secure link sharing application with Cloudflare Pages Functions",
   "main": "client/index.html",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "deploy": "node build.js"
   },
   "keywords": [
     "link-sharing",
@@ -15,12 +16,11 @@
   ],
   "author": "Dave",
   "license": "MIT",
+  "dependencies": {
+    "@cloudflare/kv-asset-handler": "^0.3.0"
+  },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
-  },
-  "cloudflare": {
-    "build_command": "npm run build",
-    "build_output_directory": "dist"
   }
 }
