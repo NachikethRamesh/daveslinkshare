@@ -1,5 +1,5 @@
 // Cloudflare Pages Function - User Login
-export async function onRequest(context) {
+export async function onRequestPost(context) {
   const headers = {
     'Content-Type': 'application/json'
   };
@@ -7,15 +7,7 @@ export async function onRequest(context) {
   try {
     const { request, env } = context;
     
-    // Only handle POST requests
-    if (request.method !== 'POST') {
-      return new Response(JSON.stringify({ 
-        error: 'Method not allowed. Use POST.' 
-      }), {
-        status: 405,
-        headers
-      });
-    }
+    // This function only handles POST requests
 
     let requestData;
     

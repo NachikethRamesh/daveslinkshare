@@ -1,13 +1,14 @@
 // Cloudflare Pages Function - User Login
 export async function onRequestPost(context) {
   const headers = {
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
   };
 
   try {
     const { request, env } = context;
-    
-    // This function only handles POST requests
 
     let requestData;
     
@@ -42,14 +43,15 @@ export async function onRequestPost(context) {
     
     // Return test response
     const response = {
-      message: 'Login successful',
+      success: true,
+      message: 'Login endpoint working!',
       user: { username },
       token: 'test-token-' + Date.now(),
       environment: {
         hasApiKey: !!apiKey,
         hasBinId: !!authBinId,
         hasJwtSecret: !!jwtSecret,
-        nodeEnv: env?.NODE_ENV
+        nodeEnv: env?.NODE_ENV || 'production'
       }
     };
 
@@ -77,7 +79,7 @@ export async function onRequestOptions(context) {
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type'
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization'
     }
   });
 }
