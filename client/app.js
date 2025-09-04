@@ -17,15 +17,8 @@ class LinksApp {
 
     // API Methods
     async apiRequest(endpoint, options = {}) {
-        // Handle different endpoint formats for Cloudflare Functions
-        let url;
-        if (endpoint === '/auth/login') {
-            url = '/login'; // Use simpler Cloudflare function
-        } else if (endpoint === '/health') {
-            url = '/api/health'; // Keep health check as is
-        } else {
-            url = `${this.apiBase}${endpoint}`;
-        }
+        // Use standard API paths for Cloudflare Functions
+        const url = `${this.apiBase}${endpoint}`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
