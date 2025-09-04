@@ -1,24 +1,67 @@
 // Simple static file serving without KV
 
+// JSONBin utility functions
+async function fetchFromBin(binId, apiKey) {
+  const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}/latest`, {
+    headers: {
+      'X-Master-Key': apiKey,
+      'X-Bin-Meta': 'false'
+    }
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to fetch from bin: ${response.status}`);
+  }
+  
+  return await response.json();
+}
+
+async function updateBin(binId, apiKey, data) {
+  const response = await fetch(`https://api.jsonbin.io/v3/b/${binId}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Master-Key': apiKey,
+      'X-Bin-Meta': 'false'
+    },
+    body: JSON.stringify(data)
+  });
+  
+  if (!response.ok) {
+    throw new Error(`Failed to update bin: ${response.status}`);
+  }
+  
+  return await response.json();
+}
+
+// Common response headers
+const CORS_HEADERS = {
+  'Content-Type': 'application/json',
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+};
+
+function createResponse(data, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: CORS_HEADERS });
+}
+
+function createErrorResponse(error, status = 500) {
+  return new Response(JSON.stringify({ error }), { status, headers: CORS_HEADERS });
+}
+
 // Import API handlers
 async function handleAuthLogin(request, env) {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-  };
-
   if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    return new Response(null, { status: 200, headers: CORS_HEADERS });
   }
 
   if (request.method === 'GET') {
-    return new Response(JSON.stringify({
+    return createResponse({
       message: 'Login endpoint ready',
       method: 'GET',
       timestamp: new Date().toISOString()
-    }), { status: 200, headers });
+    });
   }
 
   if (request.method === 'POST') {
@@ -27,85 +70,75 @@ async function handleAuthLogin(request, env) {
       const { username, password } = requestData;
 
       if (!username || !password) {
-        return new Response(JSON.stringify({ 
-          error: 'Username and password required' 
-        }), { status: 400, headers });
+        return createErrorResponse('Username and password required', 400);
       }
 
       const apiKey = env.JSONBIN_API_KEY;
       const authBinId = env.AUTH_BIN_ID;
 
       if (!apiKey || !authBinId) {
-        return new Response(JSON.stringify({
-          error: 'Server configuration error'
-        }), { status: 500, headers });
+        return createErrorResponse('Server configuration error', 500);
       }
 
       // Check JSONBin for user
-      const response = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        }
-      });
-
-      if (!response.ok) {
-        return new Response(JSON.stringify({
-          error: 'Authentication service error'
-        }), { status: 503, headers });
+      let authData;
+      try {
+        authData = await fetchFromBin(authBinId, apiKey);
+      } catch (error) {
+        return createErrorResponse('Authentication service error', 503);
       }
-
-      const authData = await response.json();
       const userData = authData && authData[username];
 
       if (!userData) {
-        return new Response(JSON.stringify({
-          error: 'Invalid credentials'
-        }), { status: 401, headers });
+        return createErrorResponse('Invalid credentials', 401);
       }
 
       // Verify password if user has hashed password
       if (userData.password) {
-        const passwordHash = await generatePasswordHash(password);
-        if (userData.password !== passwordHash) {
-          return new Response(JSON.stringify({
-            error: 'Invalid credentials'
-          }), { status: 401, headers });
+        const passwordCheck = await verifyPassword(password, userData.password);
+        if (!passwordCheck.valid) {
+          return createErrorResponse('Invalid credentials', 401);
+        }
+        
+        // If password needs upgrade, update it in the background
+        if (passwordCheck.needsUpgrade) {
+          try {
+            const updatedData = {
+              ...authData,
+              [username]: {
+                ...userData,
+                password: passwordCheck.newHash
+              }
+            };
+            
+            await updateBin(authBinId, apiKey, updatedData);
+          } catch (upgradeError) {
+            // Silent fail - don't break login if upgrade fails
+          }
         }
       }
 
       const token = btoa(JSON.stringify({ username, timestamp: Date.now() }));
 
-      return new Response(JSON.stringify({
+      return createResponse({
         success: true,
         message: 'Login successful!',
         user: { username },
         token: token,
         timestamp: new Date().toISOString()
-      }), { status: 200, headers });
+      });
 
     } catch (error) {
-      return new Response(JSON.stringify({ 
-        error: 'Internal server error' 
-      }), { status: 500, headers });
+      return createErrorResponse('Internal server error', 500);
     }
   }
 
-  return new Response(JSON.stringify({
-    error: 'Method not allowed'
-  }), { status: 405, headers });
+  return createErrorResponse('Method not allowed', 405);
 }
 
 async function handleAuthRegister(request, env) {
-  const headers = {
-    'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
-  };
-
   if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 200, headers });
+    return new Response(null, { status: 200, headers: CORS_HEADERS });
   }
 
   if (request.method === 'POST') {
@@ -114,53 +147,35 @@ async function handleAuthRegister(request, env) {
       const { username, password } = requestData;
 
       if (!username || !password) {
-        return new Response(JSON.stringify({ 
-          error: 'Username and password required' 
-        }), { status: 400, headers });
+        return createErrorResponse('Username and password required', 400);
       }
 
       // Basic validation
       if (username.length < 3) {
-        return new Response(JSON.stringify({ 
-          error: 'Username must be at least 3 characters long' 
-        }), { status: 400, headers });
+        return createErrorResponse('Username must be at least 3 characters long', 400);
       }
 
       if (password.length < 6) {
-        return new Response(JSON.stringify({ 
-          error: 'Password must be at least 6 characters long' 
-        }), { status: 400, headers });
+        return createErrorResponse('Password must be at least 6 characters long', 400);
       }
 
       const apiKey = env.JSONBIN_API_KEY;
       const authBinId = env.AUTH_BIN_ID;
 
       if (!apiKey || !authBinId) {
-        return new Response(JSON.stringify({
-          error: 'Server configuration error'
-        }), { status: 500, headers });
+        return createErrorResponse('Server configuration error', 500);
       }
 
-      // First, check if user already exists
-      const checkResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}/latest`, {
-        headers: {
-          'X-Master-Key': apiKey,
-          'X-Bin-Meta': 'false'
-        }
-      });
-
-      if (!checkResponse.ok) {
-        return new Response(JSON.stringify({
-          error: 'Authentication service error'
-        }), { status: 503, headers });
+      // Check if user already exists
+      let existingData = {};
+      try {
+        existingData = await fetchFromBin(authBinId, apiKey);
+      } catch (error) {
+        return createErrorResponse('Authentication service error', 503);
       }
-
-      const existingData = await checkResponse.json();
       
       if (existingData && existingData[username]) {
-        return new Response(JSON.stringify({
-          error: 'Username already exists'
-        }), { status: 409, headers });
+        return createErrorResponse('Username already exists', 409);
       }
 
       // Create user hash for password (simple hash for demo)
@@ -178,51 +193,77 @@ async function handleAuthRegister(request, env) {
       };
 
       // Update JSONBin with new user
-      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}`, {
-        method: 'PUT',
-        headers: {
-          'X-Master-Key': apiKey,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(updatedData)
-      });
-
-      if (!updateResponse.ok) {
-        return new Response(JSON.stringify({
-          error: 'Failed to create user account'
-        }), { status: 503, headers });
+      try {
+        await updateBin(authBinId, apiKey, updatedData);
+      } catch (error) {
+        return createErrorResponse('Failed to create user account', 503);
       }
 
       // Generate token for immediate login
       const token = btoa(JSON.stringify({ username, timestamp: Date.now() }));
 
-      return new Response(JSON.stringify({
+      return createResponse({
         success: true,
         message: 'Account created successfully!',
         user: { username },
         token: token,
         timestamp: new Date().toISOString()
-      }), { status: 201, headers });
+      }, 201);
 
     } catch (error) {
-      return new Response(JSON.stringify({ 
-        error: 'Internal server error' 
-      }), { status: 500, headers });
+      return createErrorResponse('Internal server error', 500);
     }
   }
 
-  return new Response(JSON.stringify({
-    error: 'Method not allowed'
-  }), { status: 405, headers });
+  return createErrorResponse('Method not allowed', 405);
 }
 
-// Simple password hashing function
+// Password hashing functions with backward compatibility
 async function generatePasswordHash(password) {
+  // Current SHA-256 method
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'salt_2025');
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Legacy hashing methods for backward compatibility
+function generatePasswordHashLegacy1(password) {
+  // Simple btoa method (earliest version)
+  return btoa(password);
+}
+
+async function generatePasswordHashLegacy2(password) {
+  // SHA-256 without salt (intermediate version)
+  const encoder = new TextEncoder();
+  const data = encoder.encode(password);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Check password against all possible hashing methods
+async function verifyPassword(inputPassword, storedHash) {
+  // Try current method first
+  const currentHash = await generatePasswordHash(inputPassword);
+  if (currentHash === storedHash) {
+    return { valid: true, needsUpgrade: false };
+  }
+  
+  // Try legacy method 1 (btoa)
+  const legacy1Hash = generatePasswordHashLegacy1(inputPassword);
+  if (legacy1Hash === storedHash) {
+    return { valid: true, needsUpgrade: true, newHash: currentHash };
+  }
+  
+  // Try legacy method 2 (SHA-256 without salt)
+  const legacy2Hash = await generatePasswordHashLegacy2(inputPassword);
+  if (legacy2Hash === storedHash) {
+    return { valid: true, needsUpgrade: true, newHash: currentHash };
+  }
+  
+  return { valid: false, needsUpgrade: false };
 }
 
 // Simple user hash function
@@ -259,9 +300,7 @@ async function handlePasswordReset(request, env) {
 
       // Basic validation
       if (username.length < 3) {
-        return new Response(JSON.stringify({ 
-          error: 'Username must be at least 3 characters long' 
-        }), { status: 400, headers });
+        return createErrorResponse('Username must be at least 3 characters long', 400);
       }
 
       if (newPassword.length < 6) {
@@ -274,9 +313,7 @@ async function handlePasswordReset(request, env) {
       const authBinId = env.AUTH_BIN_ID;
 
       if (!apiKey || !authBinId) {
-        return new Response(JSON.stringify({
-          error: 'Server configuration error'
-        }), { status: 500, headers });
+        return createErrorResponse('Server configuration error', 500);
       }
 
       // Check if user exists
@@ -342,15 +379,255 @@ async function handlePasswordReset(request, env) {
       }), { status: 200, headers });
 
     } catch (error) {
-      return new Response(JSON.stringify({ 
-        error: 'Internal server error' 
+      return createErrorResponse('Internal server error', 500);
+    }
+  }
+
+  return createErrorResponse('Method not allowed', 405);
+}
+
+// Links API handler
+async function handleLinks(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: CORS_HEADERS });
+  }
+
+  // Check authorization
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return createErrorResponse('Authorization required', 401);
+  }
+
+  const token = authHeader.substring(7);
+  let username;
+  try {
+    const tokenData = JSON.parse(atob(token));
+    username = tokenData.username;
+  } catch (error) {
+    return createErrorResponse('Invalid token', 401);
+  }
+
+  if (!username) {
+    return createErrorResponse('Invalid token', 401);
+  }
+
+  const apiKey = env.JSONBIN_API_KEY;
+  const linksBinId = env.LINKS_BIN_ID;
+
+  if (!apiKey || !linksBinId) {
+    return new Response(JSON.stringify({
+      error: 'Server configuration error'
+    }), { status: 500, headers });
+  }
+
+  // Generate user hash for data isolation
+  const userHash = await generateUserHash(username);
+
+  if (request.method === 'GET') {
+    // Get user's links
+    try {
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        }
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to fetch links'
+        }), { status: 503, headers });
+      }
+
+      const allData = await response.json();
+      const userLinks = allData[userHash] || [];
+
+      return new Response(JSON.stringify({
+        success: true,
+        links: userLinks
+      }), { status: 200, headers });
+
+    } catch (error) {
+      return new Response(JSON.stringify({
+        error: 'Failed to fetch links'
       }), { status: 500, headers });
     }
   }
 
-  return new Response(JSON.stringify({
-    error: 'Method not allowed'
-  }), { status: 405, headers });
+  if (request.method === 'POST') {
+    // Add new link
+    try {
+      const requestData = await request.json();
+      const { url, title, category } = requestData;
+
+      if (!url) {
+        return new Response(JSON.stringify({
+          error: 'URL is required'
+        }), { status: 400, headers });
+      }
+
+      // Validate URL format
+      try {
+        new URL(url);
+      } catch (urlError) {
+        return new Response(JSON.stringify({
+          error: 'Invalid URL format'
+        }), { status: 400, headers });
+      }
+
+      // Get existing data
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        }
+      });
+
+      let allData = {};
+      if (response.ok) {
+        allData = await response.json();
+      }
+
+      const userLinks = allData[userHash] || [];
+      
+      // Create new link object
+      const newLink = {
+        id: Date.now().toString(),
+        url: url,
+        title: title || await extractTitleFromUrl(url) || 'Untitled',
+        category: category || 'general',
+        dateAdded: new Date().toISOString(),
+        domain: getDomainFromUrl(url)
+      };
+
+      // Add to user's links
+      const updatedUserLinks = [...userLinks, newLink];
+      
+      // Update the bin
+      const updatedData = {
+        ...allData,
+        [userHash]: updatedUserLinks
+      };
+
+      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!updateResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to save link'
+        }), { status: 503, headers });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Link saved successfully',
+        link: newLink
+      }), { status: 201, headers });
+
+    } catch (error) {
+      return new Response(JSON.stringify({
+        error: 'Failed to add link'
+      }), { status: 500, headers });
+    }
+  }
+
+  if (request.method === 'DELETE') {
+    // Delete link
+    try {
+      const url = new URL(request.url);
+      const linkId = url.searchParams.get('id');
+
+      if (!linkId) {
+        return new Response(JSON.stringify({
+          error: 'Link ID is required'
+        }), { status: 400, headers });
+      }
+
+      // Get existing data
+      const response = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        }
+      });
+
+      if (!response.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to fetch links'
+        }), { status: 503, headers });
+      }
+
+      const allData = await response.json();
+      const userLinks = allData[userHash] || [];
+      
+      // Remove the link
+      const updatedUserLinks = userLinks.filter(link => link.id !== linkId);
+      
+      // Update the bin
+      const updatedData = {
+        ...allData,
+        [userHash]: updatedUserLinks
+      };
+
+      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${linksBinId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!updateResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to delete link'
+        }), { status: 503, headers });
+      }
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Link deleted successfully'
+      }), { status: 200, headers });
+
+    } catch (error) {
+      return new Response(JSON.stringify({
+        error: 'Failed to delete link'
+      }), { status: 500, headers });
+    }
+  }
+
+  return createErrorResponse('Method not allowed', 405);
+}
+
+// Helper functions for URL processing
+async function extractTitleFromUrl(url) {
+  try {
+    const response = await fetch(url, { 
+      method: 'HEAD',
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    });
+    // For now, just return domain as title since we can't easily parse HTML in Workers
+    return getDomainFromUrl(url);
+  } catch (error) {
+    return getDomainFromUrl(url);
+  }
+}
+
+function getDomainFromUrl(url) {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.hostname.replace('www.', '');
+  } catch (error) {
+    return 'Unknown';
+  }
 }
 
 async function handleHealth(request, env) {
@@ -418,6 +695,10 @@ export default {
     
     if (path.startsWith('/api/health')) {
       return handleHealth(request, env);
+    }
+
+    if (path.startsWith('/api/links')) {
+      return handleLinks(request, env);
     }
 
     // Serve static HTML directly
@@ -923,6 +1204,10 @@ body {
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
     min-height: 500px;
+    max-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
 }
 
 .content-header {
@@ -938,6 +1223,35 @@ body {
 
 .links-container {
     padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+
+/* Custom scrollbar styling */
+.links-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.links-container::-webkit-scrollbar-track {
+    background: var(--background);
+    border-radius: 4px;
+}
+
+.links-container::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+    transition: background 0.2s ease;
+}
+
+.links-container::-webkit-scrollbar-thumb:hover {
+    background: var(--text-tertiary);
+}
+
+/* Firefox scrollbar */
+.links-container {
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) var(--background);
 }
 
 .empty-state {
@@ -946,10 +1260,96 @@ body {
     color: var(--text-secondary);
 }
 
-.empty-icon {
-    font-size: 48px;
+/* Link Items */
+.link-item {
+    background: var(--white);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
     margin-bottom: 16px;
-    opacity: 0.5;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    transition: all 0.2s ease;
+    box-shadow: var(--shadow);
+}
+
+.link-item:hover {
+    box-shadow: var(--shadow-hover);
+    border-color: var(--primary-red);
+}
+
+.link-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.link-title {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+.link-title a {
+    color: var(--text-primary);
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.link-title a:hover {
+    color: var(--primary-red);
+}
+
+.link-domain {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.link-date {
+    margin: 0;
+    font-size: 12px;
+    color: var(--text-tertiary);
+}
+
+.link-actions {
+    display: flex;
+    gap: 8px;
+    margin-left: 16px;
+    flex-shrink: 0;
+}
+
+.action-btn {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.action-btn:hover {
+    background: var(--white);
+    border-color: var(--primary-red);
+    color: var(--primary-red);
+}
+
+.copy-btn:hover {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+    color: var(--white);
+}
+
+.delete-btn:hover {
+    background: var(--primary-red);
+    border-color: var(--primary-red);
+    color: var(--white);
 }
 
 .empty-title {
@@ -1153,7 +1553,7 @@ class LinksApp {
             try {
                 const response = await this.apiRequest('/health');
                 if (response) {
-                    this.showMainApp();
+                    await this.showMainApp();
                     return;
                 }
             } catch (error) {
@@ -1185,7 +1585,7 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    this.showMainApp();
+                    await this.showMainApp();
                     this.showStatus('Login successful!', 'success');
                 }
             } else {
@@ -1198,7 +1598,7 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    this.showMainApp();
+                    await this.showMainApp();
                     this.showStatus('Account created successfully!', 'success');
                 }
             }
@@ -1259,7 +1659,7 @@ class LinksApp {
                 this.token = result.token;
                 this.currentUser = result.user;
                 localStorage.setItem('authToken', this.token);
-                this.showMainApp();
+                await this.showMainApp();
                 this.showStatus('Password reset successfully! You are now logged in.', 'success');
             }
         } catch (error) {
@@ -1351,11 +1751,172 @@ class LinksApp {
             this.isLoginMode = true;
             this.updateAuthUI();
         });
+
+        // Add link form handler
+        document.getElementById('addLinkForm').addEventListener('submit', (e) => this.handleAddLink(e));
+    }
+
+    async handleAddLink(event) {
+        event.preventDefault();
+        
+        const url = document.getElementById('url').value.trim();
+        const title = document.getElementById('title').value.trim();
+        const category = document.getElementById('category').value || 'general';
+
+        if (!url) {
+            this.showStatus('URL is required', 'error');
+            return;
+        }
+
+        try {
+            const result = await this.apiRequest('/links', {
+                method: 'POST',
+                body: JSON.stringify({ url, title, category })
+            });
+
+            if (result.success) {
+                this.showStatus('Link saved successfully!', 'success');
+                document.getElementById('addLinkForm').reset();
+                await this.loadLinks(); // Refresh the links list
+            } else {
+                this.showStatus(result.error || 'Failed to save link', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to save link', 'error');
+        }
+    }
+
+    async loadLinks() {
+        if (!this.token) {
+            return;
+        }
+
+        try {
+            const result = await this.apiRequest('/links');
+            if (result.success) {
+                this.links = result.links || [];
+                this.renderLinks();
+            } else {
+                this.showStatus(result.error || 'Failed to load links', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to load links', 'error');
+        }
+    }
+
+    renderLinks() {
+        const linksContainer = document.getElementById('links');
+        
+        if (this.links.length === 0) {
+            linksContainer.innerHTML = \`
+                <div class="empty-state">
+                    <div class="empty-title">Your reading list is empty</div>
+                    <div class="empty-description">Save your first link to get started</div>
+                </div>
+            \`;
+            return;
+        }
+
+        linksContainer.innerHTML = this.links.map(link => \`
+            <div class="link-item" data-id="\${link.id}">
+                <div class="link-content">
+                    <h3 class="link-title">
+                        <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
+                    </h3>
+                    <p class="link-domain">\${link.domain}</p>
+                    <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
+                </div>
+                <div class="link-actions">
+                    <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link">
+                        Copy
+                    </button>
+                    <button class="action-btn delete-btn" onclick="app.deleteLink('\${link.id}')" title="Delete link">
+                        Delete
+                    </button>
+                </div>
+            </div>
+        \`).join('');
+    }
+
+    async copyLink(url) {
+        try {
+            await navigator.clipboard.writeText(url);
+            this.showStatus('Link copied to clipboard', 'success');
+        } catch (error) {
+            // Fallback for browsers that don't support clipboard API
+            const textArea = document.createElement('textarea');
+            textArea.value = url;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            this.showStatus('Link copied to clipboard', 'success');
+        }
+    }
+
+    async deleteLink(linkId) {
+        if (!confirm('Are you sure you want to delete this link?')) {
+            return;
+        }
+
+        try {
+            const result = await this.apiRequest(\`/links?id=\${linkId}\`, {
+                method: 'DELETE'
+            });
+
+            if (result.success) {
+                this.showStatus('Link deleted successfully', 'success');
+                await this.loadLinks(); // Refresh the links list
+            } else {
+                this.showStatus(result.error || 'Failed to delete link', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to delete link', 'error');
+        }
+    }
+
+    showStatus(message, type = 'info') {
+        // Create or update status message
+        let statusDiv = document.getElementById('statusMessage');
+        if (!statusDiv) {
+            statusDiv = document.createElement('div');
+            statusDiv.id = 'statusMessage';
+            statusDiv.style.cssText = \`
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 12px 20px;
+                border-radius: 4px;
+                color: white;
+                font-weight: 500;
+                z-index: 1000;
+                max-width: 300px;
+                word-wrap: break-word;
+            \`;
+            document.body.appendChild(statusDiv);
+        }
+
+        // Set background color based on type
+        const colors = {
+            success: '#10b981',
+            error: '#ef4444',
+            info: '#3b82f6'
+        };
+        statusDiv.style.backgroundColor = colors[type] || colors.info;
+        statusDiv.textContent = message;
+        statusDiv.style.display = 'block';
+
+        // Auto-hide after 3 seconds
+        setTimeout(() => {
+            if (statusDiv) {
+                statusDiv.style.display = 'none';
+            }
+        }, 3000);
     }
 }
 
 // Initialize app when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
-    new LinksApp();
+    window.app = new LinksApp();
 });`;
 }
