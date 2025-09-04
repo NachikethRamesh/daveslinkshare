@@ -90,7 +90,7 @@ async function handleAuthLogin(request, env) {
       const userData = authData && authData[username];
 
       if (!userData) {
-        return createErrorResponse('Invalid credentials', 401);
+        return createErrorResponse('User not found', 404);
       }
 
       // Verify password if user has hashed password
@@ -418,33 +418,21 @@ async function handleLinks(request, env) {
     return createErrorResponse('Server configuration error', 500);
   }
 
-  // Get user hash from auth data for consistency
+  // Get user hash from auth data - must use the stored hash for consistency
   let userHash;
   try {
     const authData = await fetchFromBin(env.AUTH_BIN_ID, apiKey);
     const userData = authData[username];
     if (!userData) {
-      return createErrorResponse('User not found', 401);
+      return createErrorResponse('User not found', 404);
     }
     
-    // Use stored userHash if available, otherwise generate consistent hash for backward compatibility
-    userHash = userData.userHash || await generateUserHash(username);
-    
-    // If user doesn't have a stored hash, update their record with the generated hash
+    // MUST use the stored userHash from registration - never generate new one
     if (!userData.userHash) {
-      const updatedAuthData = {
-        ...authData,
-        [username]: {
-          ...userData,
-          userHash: userHash
-        }
-      };
-      try {
-        await updateBin(env.AUTH_BIN_ID, apiKey, updatedAuthData);
-      } catch (updateError) {
-        // Continue even if update fails - the hash will work for this session
-      }
+      return createErrorResponse('User hash not found - please re-register', 401);
     }
+    
+    userHash = userData.userHash;
   } catch (error) {
     return createErrorResponse('Failed to verify user', 503);
   }
@@ -1557,6 +1545,14 @@ class LinksApp {
                     localStorage.setItem('authToken', this.token);
                     await this.showMainApp();
                     this.showStatus('Login successful!', 'success');
+                } else if (result.error === 'User not found') {
+                    // If user doesn't exist, automatically switch to signup mode
+                    this.switchToSignup();
+                    this.showStatus('User not found. Please create an account.', 'info');
+                    return;
+                } else if (result.error === 'Invalid credentials') {
+                    this.showStatus('Incorrect password. Please try again.', 'error');
+                    return;
                 }
             } else {
                 const result = await this.apiRequest('/auth/register', {
@@ -1782,6 +1778,13 @@ class LinksApp {
                 this.showStatus(result.error || 'Failed to load links', 'error');
             }
         } catch (error) {
+            // If user not found, redirect to signup
+            if (error.message && error.message.includes('User not found')) {
+                this.logout();
+                this.switchToSignup();
+                this.showStatus('Account not found. Please create an account.', 'info');
+                return;
+            }
             this.showStatus('Failed to load links', 'error');
         }
     }
