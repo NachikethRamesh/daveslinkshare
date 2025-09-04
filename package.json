@@ -16,9 +16,6 @@
   ],
   "author": "Dave",
   "license": "MIT",
-  "dependencies": {
-    "@cloudflare/kv-asset-handler": "^0.3.0"
-  },
   "engines": {
     "node": ">=16.0.0",
     "npm": ">=8.0.0"
