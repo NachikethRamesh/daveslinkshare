@@ -1328,6 +1328,51 @@ body {
     color: var(--white);
 }
 
+/* Loading and Pending States */
+.loading-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.loading-spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border);
+    border-top-color: var(--primary-red);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 16px;
+}
+
+.loading-text {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.link-item.pending {
+    opacity: 0.7;
+    background: var(--light-gray);
+}
+
+.pending-indicator {
+    font-size: 12px;
+    color: var(--primary-red);
+    font-weight: 500;
+    margin-left: 8px;
+    opacity: 0.8;
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 .empty-title {
     font-size: 18px;
     font-weight: 500;
@@ -1470,6 +1515,9 @@ class LinksApp {
         this.token = localStorage.getItem('authToken');
         this.isLoginMode = true;
         this.apiBase = '/api';
+        this.linksCache = new Map(); // Cache for links by user
+        this.pendingSaves = new Set(); // Track pending saves
+        this.lastSyncTime = 0; // Track last sync for caching
         this.init();
     }
 
@@ -1682,6 +1730,9 @@ class LinksApp {
             this.token = null;
             this.currentUser = null;
             this.links = [];
+            this.linksCache.clear(); // Clear all cached links
+            this.pendingSaves.clear(); // Clear pending saves
+            this.lastSyncTime = 0; // Reset sync time
             localStorage.removeItem('authToken');
             this.showAuthContainer();
         }
@@ -1772,6 +1823,28 @@ class LinksApp {
             return;
         }
 
+        // Create optimistic link object
+        const optimisticLink = {
+            id: 'temp_' + Date.now(),
+            url: url,
+            title: title || this.extractDomainFromUrl(url),
+            category: category,
+            dateAdded: new Date().toISOString(),
+            domain: this.extractDomainFromUrl(url),
+            isPending: true // Mark as pending
+        };
+
+        // Optimistic update - add to UI immediately
+        this.links.unshift(optimisticLink);
+        this.renderLinks();
+        this.clearAddLinkForm();
+        this.showStatus('Saving link...', 'info');
+
+        // Update cache
+        if (this.currentUser) {
+            this.linksCache.set(this.currentUser.username, [...this.links]);
+        }
+
         try {
             const result = await this.apiRequest('/links', {
                 method: 'POST',
@@ -1779,30 +1852,70 @@ class LinksApp {
             });
 
             if (result.success) {
+                // Replace optimistic link with real one
+                const linkIndex = this.links.findIndex(link => link.id === optimisticLink.id);
+                if (linkIndex !== -1) {
+                    this.links[linkIndex] = result.link;
+                    this.renderLinks();
+                    
+                    // Update cache
+                    if (this.currentUser) {
+                        this.linksCache.set(this.currentUser.username, [...this.links]);
+                    }
+                }
                 this.showStatus('Link saved successfully!', 'success');
-                this.clearAddLinkForm(); // Clear form after successful save
-                await this.loadLinks(); // Refresh the links list
             } else {
+                // Remove optimistic link on failure
+                this.links = this.links.filter(link => link.id !== optimisticLink.id);
+                this.renderLinks();
                 this.showStatus(result.error || 'Failed to save link', 'error');
             }
         } catch (error) {
+            // Remove optimistic link on error
+            this.links = this.links.filter(link => link.id !== optimisticLink.id);
+            this.renderLinks();
             this.showStatus('Failed to save link', 'error');
         }
     }
 
-    async loadLinks() {
+    extractDomainFromUrl(url) {
+        try {
+            return new URL(url).hostname.replace('www.', '');
+        } catch {
+            return 'Unknown';
+        }
+    }
+
+    async loadLinks(forceRefresh = false) {
         if (!this.token || !this.currentUser) {
             this.links = [];
             this.renderLinks();
             return;
         }
 
+        const cacheKey = this.currentUser.username;
+        const now = Date.now();
+        
+        // Use cache if available and not forcing refresh (cache valid for 30 seconds)
+        if (!forceRefresh && this.linksCache.has(cacheKey) && (now - this.lastSyncTime) < 30000) {
+            this.links = this.linksCache.get(cacheKey);
+            this.renderLinks();
+            return;
+        }
+
         try {
+            // Show loading state only if no cached data
+            if (!this.linksCache.has(cacheKey)) {
+                this.showLoadingState();
+            }
+
             const result = await this.apiRequest('/links');
             if (result.success) {
                 // Double-check we still have the same user (prevent race conditions)
-                if (this.currentUser) {
+                if (this.currentUser && this.currentUser.username === cacheKey) {
                     this.links = result.links || [];
+                    this.linksCache.set(cacheKey, this.links); // Cache the results
+                    this.lastSyncTime = now;
                     this.renderLinks();
                 } else {
                     // User logged out while request was in progress
@@ -1824,6 +1937,16 @@ class LinksApp {
         }
     }
 
+    showLoadingState() {
+        const linksContainer = document.getElementById('links');
+        linksContainer.innerHTML = \`
+            <div class="loading-state">
+                <div class="loading-spinner"></div>
+                <div class="loading-text">Loading your links...</div>
+            </div>
+        \`;
+    }
+
     renderLinks() {
         const linksContainer = document.getElementById('links');
         
@@ -1838,10 +1961,11 @@ class LinksApp {
         }
 
         linksContainer.innerHTML = this.links.map(link => \`
-            <div class="link-item" data-id="\${link.id}">
+            <div class="link-item \${link.isPending ? 'pending' : ''}" data-id="\${link.id}">
                 <div class="link-content">
                     <h3 class="link-title">
                         <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
+                        \${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
                     </h3>
                     <div class="link-meta">
                         <span class="link-domain">\${link.domain}</span>
@@ -1850,10 +1974,10 @@ class LinksApp {
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
-                    <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link">
+                    <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
-                    <button class="action-btn delete-btn" onclick="app.deleteLink('\${link.id}')" title="Delete link">
+                    <button class="action-btn delete-btn" onclick="app.deleteLink('\${link.id}')" title="Delete link" \${link.isPending ? 'disabled' : ''}>
                         Delete
                     </button>
                 </div>
@@ -1878,6 +2002,22 @@ class LinksApp {
     }
 
     async deleteLink(linkId) {
+        // Find the link to delete
+        const linkIndex = this.links.findIndex(link => link.id === linkId);
+        if (linkIndex === -1) return;
+
+        const linkToDelete = this.links[linkIndex];
+        
+        // Optimistic delete - remove from UI immediately
+        this.links.splice(linkIndex, 1);
+        this.renderLinks();
+        this.showStatus('Deleting link...', 'info');
+
+        // Update cache
+        if (this.currentUser) {
+            this.linksCache.set(this.currentUser.username, [...this.links]);
+        }
+
         try {
             const result = await this.apiRequest(\`/links?id=\${linkId}\`, {
                 method: 'DELETE'
@@ -1885,11 +2025,16 @@ class LinksApp {
 
             if (result.success) {
                 this.showStatus('Link deleted successfully', 'success');
-                await this.loadLinks(); // Refresh the links list
             } else {
+                // Restore link on failure
+                this.links.splice(linkIndex, 0, linkToDelete);
+                this.renderLinks();
                 this.showStatus(result.error || 'Failed to delete link', 'error');
             }
         } catch (error) {
+            // Restore link on error
+            this.links.splice(linkIndex, 0, linkToDelete);
+            this.renderLinks();
             this.showStatus('Failed to delete link', 'error');
         }
     }
