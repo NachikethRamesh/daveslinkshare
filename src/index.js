@@ -1539,7 +1539,33 @@ class LinksApp {
         if (this.currentRoute !== path) {
             this.currentRoute = path;
             window.history.pushState({}, '', path);
-            this.handleRoute();
+            // Don't call handleRoute here to avoid recursion
+            // Instead, directly handle the navigation
+            this.handleNavigation(path);
+        }
+    }
+
+    handleNavigation(path) {
+        switch (path) {
+            case '/':
+            case '/login':
+                this.isLoginMode = true;
+                this.updateAuthUI();
+                this.showAuthContainer();
+                break;
+            case '/signup':
+                this.isLoginMode = false;
+                this.updateAuthUI();
+                this.showAuthContainer();
+                break;
+            case '/reset-password':
+                this.showResetContainer();
+                break;
+            case '/home':
+            case '/dashboard':
+                // For direct navigation, show main app without async operations
+                this.showMainAppSync();
+                break;
         }
     }
 
@@ -1547,30 +1573,52 @@ class LinksApp {
         const path = window.location.pathname;
         this.currentRoute = path;
 
+        // First, check authentication status
+        let isAuthenticated = false;
+        if (this.token) {
+            try {
+                const tokenData = JSON.parse(atob(this.token));
+                if (tokenData && tokenData.username) {
+                    this.currentUser = { username: tokenData.username };
+                    // Quick check without API call for initial routing
+                    isAuthenticated = true;
+                }
+            } catch (error) {
+                localStorage.removeItem('authToken');
+                this.token = null;
+                this.currentUser = null;
+            }
+        }
+
+        // Route based on path and auth status
         switch (path) {
             case '/':
-            case '/login':
-            case '/signup':
-                if (this.token) {
-                    // If user is logged in but on auth pages, redirect to home
-                    try {
-                        const tokenData = JSON.parse(atob(this.token));
-                        if (tokenData && tokenData.username) {
-                            this.currentUser = { username: tokenData.username };
-                            // Verify token is still valid
-                            const response = await this.apiRequest('/health');
-                            if (response) {
-                                this.navigateTo('/home');
-                                return;
-                            }
-                        }
-                    } catch (error) {
-                        localStorage.removeItem('authToken');
-                        this.token = null;
-                        this.currentUser = null;
-                    }
+                // Root path - redirect based on auth
+                if (isAuthenticated) {
+                    this.navigateTo('/home');
+                } else {
+                    this.navigateTo('/login');
                 }
-                this.showAuthContainer();
+                break;
+                
+            case '/login':
+                if (isAuthenticated) {
+                    this.navigateTo('/home');
+                } else {
+                    this.isLoginMode = true;
+                    this.updateAuthUI();
+                    this.showAuthContainer();
+                }
+                break;
+                
+            case '/signup':
+                if (isAuthenticated) {
+                    this.navigateTo('/home');
+                } else {
+                    this.isLoginMode = false;
+                    this.updateAuthUI();
+                    this.showAuthContainer();
+                }
                 break;
             
             case '/reset-password':
@@ -1579,32 +1627,16 @@ class LinksApp {
                 
             case '/home':
             case '/dashboard':
-                if (!this.token) {
+                if (!isAuthenticated) {
                     this.navigateTo('/login');
-                    return;
+                } else {
+                    await this.showMainApp();
                 }
-                try {
-                    const tokenData = JSON.parse(atob(this.token));
-                    if (tokenData && tokenData.username) {
-                        this.currentUser = { username: tokenData.username };
-                        // Verify token is still valid
-                        const response = await this.apiRequest('/health');
-                        if (response) {
-                            await this.showMainApp();
-                            return;
-                        }
-                    }
-                } catch (error) {
-                    localStorage.removeItem('authToken');
-                    this.token = null;
-                    this.currentUser = null;
-                }
-                this.navigateTo('/login');
                 break;
                 
             default:
-                // Handle unknown routes - redirect based on auth status
-                if (this.token) {
+                // Handle unknown routes - redirect to appropriate page
+                if (isAuthenticated) {
                     this.navigateTo('/home');
                 } else {
                     this.navigateTo('/login');
@@ -1727,7 +1759,7 @@ class LinksApp {
         document.getElementById('mainApp').classList.add('hidden');
     }
 
-    async showMainApp() {
+    showMainAppSync() {
         document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
@@ -1736,10 +1768,15 @@ class LinksApp {
         }
         this.clearAddLinkForm(); // Clear form when showing main app
         
-        // Clear previous user's links and load current user's links
+        // Clear previous user's links and show empty state
         this.links = [];
         this.renderLinks(); // Show empty state immediately
-        await this.loadLinks(); // Load current user's links
+    }
+
+    async showMainApp() {
+        this.showMainAppSync();
+        // Load current user's links asynchronously
+        await this.loadLinks(); 
     }
 
     clearAddLinkForm() {
