@@ -1575,14 +1575,22 @@ class LinksApp {
     async checkAuthStatus() {
         if (this.token) {
             try {
-                const response = await this.apiRequest('/health');
-                if (response) {
-                    await this.showMainApp();
-                    return;
+                // Extract user info from token
+                const tokenData = JSON.parse(atob(this.token));
+                if (tokenData && tokenData.username) {
+                    this.currentUser = { username: tokenData.username };
+                    
+                    // Verify token is still valid with server
+                    const response = await this.apiRequest('/health');
+                    if (response) {
+                        await this.showMainApp();
+                        return;
+                    }
                 }
             } catch (error) {
                 localStorage.removeItem('authToken');
                 this.token = null;
+                this.currentUser = null;
             }
         }
         this.showAuthContainer();
@@ -1659,7 +1667,7 @@ class LinksApp {
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
-            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
+            document.getElementById('userGreeting').textContent = `${this.currentUser.username}'s List`;
         }
         this.clearAddLinkForm(); // Clear form when showing main app
         
