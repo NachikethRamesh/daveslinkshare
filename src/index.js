@@ -266,10 +266,10 @@ async function verifyPassword(inputPassword, storedHash) {
   return { valid: false, needsUpgrade: false };
 }
 
-// Simple user hash function
+// Simple user hash function - consistent hash based on username only
 async function generateUserHash(username) {
   const encoder = new TextEncoder();
-  const data = encoder.encode(username + Date.now());
+  const data = encoder.encode(username + 'user_salt_2025'); // Use consistent salt instead of timestamp
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
@@ -418,8 +418,36 @@ async function handleLinks(request, env) {
     return createErrorResponse('Server configuration error', 500);
   }
 
-  // Generate user hash for data isolation
-  const userHash = await generateUserHash(username);
+  // Get user hash from auth data for consistency
+  let userHash;
+  try {
+    const authData = await fetchFromBin(env.AUTH_BIN_ID, apiKey);
+    const userData = authData[username];
+    if (!userData) {
+      return createErrorResponse('User not found', 401);
+    }
+    
+    // Use stored userHash if available, otherwise generate consistent hash for backward compatibility
+    userHash = userData.userHash || await generateUserHash(username);
+    
+    // If user doesn't have a stored hash, update their record with the generated hash
+    if (!userData.userHash) {
+      const updatedAuthData = {
+        ...authData,
+        [username]: {
+          ...userData,
+          userHash: userHash
+        }
+      };
+      try {
+        await updateBin(env.AUTH_BIN_ID, apiKey, updatedAuthData);
+      } catch (updateError) {
+        // Continue even if update fails - the hash will work for this session
+      }
+    }
+  } catch (error) {
+    return createErrorResponse('Failed to verify user', 503);
+  }
 
   if (request.method === 'GET') {
     // Get user's links
