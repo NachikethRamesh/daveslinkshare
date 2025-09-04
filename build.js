@@ -33,12 +33,19 @@ console.log('✅ Using actual client application with Cloudflare Functions API')
 
 // No _redirects file needed for simple static site
 
-// Copy _headers file
-const headersPath = path.join(__dirname, '_headers');
-if (fs.existsSync(headersPath)) {
-    fs.copyFileSync(headersPath, path.join(distDir, '_headers'));
-    console.log('✅ Copied _headers file');
-}
+        // Copy _headers file
+        const headersPath = path.join(__dirname, '_headers');
+        if (fs.existsSync(headersPath)) {
+            fs.copyFileSync(headersPath, path.join(distDir, '_headers'));
+            console.log('✅ Copied _headers file');
+        }
+
+        // Copy _routes.json file
+        const routesPath = path.join(__dirname, '_routes.json');
+        if (fs.existsSync(routesPath)) {
+            fs.copyFileSync(routesPath, path.join(distDir, '_routes.json'));
+            console.log('✅ Copied _routes.json file');
+        }
 
 // Copy functions directory for Cloudflare Pages Functions
 const functionsSourceDir = path.join(__dirname, 'functions');

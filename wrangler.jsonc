@@ -1,9 +1,7 @@
 {
   "name": "daveslinkshare",
   "compatibility_date": "2025-09-03",
-  "assets": {
-    "directory": "./dist"
-  },
+  "pages_build_output_dir": "./dist",
   "vars": {
     "NODE_ENV": "production",
     "CLIENT_URL": "https://daveslinkshare.app",
