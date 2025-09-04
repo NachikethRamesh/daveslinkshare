@@ -234,6 +234,125 @@ async function generateUserHash(username) {
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16);
 }
 
+async function handlePasswordReset(request, env) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+  };
+
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers });
+  }
+
+  if (request.method === 'POST') {
+    try {
+      const requestData = await request.json();
+      const { username, newPassword } = requestData;
+
+      if (!username || !newPassword) {
+        return new Response(JSON.stringify({ 
+          error: 'Username and new password required' 
+        }), { status: 400, headers });
+      }
+
+      // Basic validation
+      if (username.length < 3) {
+        return new Response(JSON.stringify({ 
+          error: 'Username must be at least 3 characters long' 
+        }), { status: 400, headers });
+      }
+
+      if (newPassword.length < 6) {
+        return new Response(JSON.stringify({ 
+          error: 'New password must be at least 6 characters long' 
+        }), { status: 400, headers });
+      }
+
+      const apiKey = env.JSONBIN_API_KEY;
+      const authBinId = env.AUTH_BIN_ID;
+
+      if (!apiKey || !authBinId) {
+        return new Response(JSON.stringify({
+          error: 'Server configuration error'
+        }), { status: 500, headers });
+      }
+
+      // Check if user exists
+      const checkResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}/latest`, {
+        headers: {
+          'X-Master-Key': apiKey,
+          'X-Bin-Meta': 'false'
+        }
+      });
+
+      if (!checkResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Authentication service error'
+        }), { status: 503, headers });
+      }
+
+      const existingData = await checkResponse.json();
+      
+      if (!existingData || !existingData[username]) {
+        return new Response(JSON.stringify({
+          error: 'User not found'
+        }), { status: 404, headers });
+      }
+
+      // Generate new password hash
+      const newPasswordHash = await generatePasswordHash(newPassword);
+
+      // Update user's password while preserving other data
+      const updatedData = {
+        ...existingData,
+        [username]: {
+          ...existingData[username],
+          password: newPasswordHash,
+          passwordResetAt: new Date().toISOString()
+        }
+      };
+
+      // Update JSONBin with new password
+      const updateResponse = await fetch(`https://api.jsonbin.io/v3/b/${authBinId}`, {
+        method: 'PUT',
+        headers: {
+          'X-Master-Key': apiKey,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updatedData)
+      });
+
+      if (!updateResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Failed to reset password'
+        }), { status: 503, headers });
+      }
+
+      // Generate token for immediate login
+      const token = btoa(JSON.stringify({ username, timestamp: Date.now() }));
+
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Password reset successfully!',
+        user: { username },
+        token: token,
+        timestamp: new Date().toISOString()
+      }), { status: 200, headers });
+
+    } catch (error) {
+      return new Response(JSON.stringify({ 
+        error: 'Internal server error' 
+      }), { status: 500, headers });
+    }
+  }
+
+  return new Response(JSON.stringify({
+    error: 'Method not allowed'
+  }), { status: 405, headers });
+}
+
 async function handleHealth(request, env) {
   const headers = {
     'Content-Type': 'application/json',
@@ -291,6 +410,10 @@ export default {
 
     if (path.startsWith('/api/auth/register')) {
       return handleAuthRegister(request, env);
+    }
+
+    if (path.startsWith('/api/auth/reset-password')) {
+      return handlePasswordReset(request, env);
     }
     
     if (path.startsWith('/api/health')) {
@@ -377,6 +500,66 @@ function getIndexHTML() {
             <div class="auth-toggle">
                 <span id="authToggleText">Don't have an account?</span>
                 <a id="authToggleLink" class="auth-toggle-link">Sign up</a>
+            </div>
+            
+            <div class="auth-reset">
+                <a id="resetPasswordLink" class="auth-reset-link">Forgot your password?</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Container -->
+    <div id="resetContainer" class="auth-container hidden">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Reset Password</h1>
+                <p class="auth-subtitle">Enter your username and new password</p>
+            </div>
+            
+            <form id="resetForm">
+                <div class="form-group">
+                    <label for="resetUsername" class="form-label">Username</label>
+                    <input 
+                        type="text" 
+                        id="resetUsername" 
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        required 
+                        autocomplete="username"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        class="form-input" 
+                        placeholder="Enter new password (min 6 characters)"
+                        required 
+                        autocomplete="new-password"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        class="form-input" 
+                        placeholder="Confirm new password"
+                        required 
+                        autocomplete="new-password"
+                    >
+                </div>
+                
+                <button type="submit" id="resetSubmit" class="btn btn-primary btn-full">
+                    Reset Password
+                </button>
+            </form>
+            
+            <div class="auth-toggle">
+                <a id="backToLoginLink" class="auth-toggle-link">← Back to Sign In</a>
             </div>
         </div>
     </div>
@@ -623,6 +806,27 @@ body {
 }
 
 .auth-toggle-link:hover {
+    text-decoration: underline;
+}
+
+.auth-reset {
+    text-align: center;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+}
+
+.auth-reset-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 400;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.auth-reset-link:hover {
+    color: var(--primary-red);
     text-decoration: underline;
 }
 
@@ -1005,14 +1209,61 @@ class LinksApp {
 
     showAuthContainer() {
         document.getElementById('authContainer').classList.remove('hidden');
+        document.getElementById('resetContainer').classList.add('hidden');
+        document.getElementById('mainApp').classList.add('hidden');
+    }
+
+    showResetContainer() {
+        document.getElementById('resetContainer').classList.remove('hidden');
+        document.getElementById('authContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.add('hidden');
     }
 
     showMainApp() {
         document.getElementById('authContainer').classList.add('hidden');
+        document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
             document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s List\`;
+        }
+    }
+
+    async handlePasswordReset(event) {
+        event.preventDefault();
+        const username = document.getElementById('resetUsername').value;
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (!username || !newPassword || !confirmPassword) {
+            this.showStatus('Please fill in all fields', 'error');
+            return;
+        }
+
+        if (newPassword !== confirmPassword) {
+            this.showStatus('Passwords do not match', 'error');
+            return;
+        }
+
+        if (newPassword.length < 6) {
+            this.showStatus('Password must be at least 6 characters long', 'error');
+            return;
+        }
+
+        try {
+            const result = await this.apiRequest('/auth/reset-password', {
+                method: 'POST',
+                body: JSON.stringify({ username, newPassword })
+            });
+
+            if (result.success) {
+                this.token = result.token;
+                this.currentUser = result.user;
+                localStorage.setItem('authToken', this.token);
+                this.showMainApp();
+                this.showStatus('Password reset successfully! You are now logged in.', 'success');
+            }
+        } catch (error) {
+            this.showStatus(error.message, 'error');
         }
     }
 
@@ -1077,7 +1328,9 @@ class LinksApp {
 
     setupEventListeners() {
         document.getElementById('authForm').addEventListener('submit', (e) => this.handleAuth(e));
+        document.getElementById('resetForm').addEventListener('submit', (e) => this.handlePasswordReset(e));
         document.getElementById('logoutBtn').addEventListener('click', () => this.logout());
+        
         document.getElementById('authToggleLink').addEventListener('click', (e) => {
             e.preventDefault();
             if (this.isLoginMode) {
@@ -1085,6 +1338,18 @@ class LinksApp {
             } else {
                 this.switchToLogin();
             }
+        });
+
+        document.getElementById('resetPasswordLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showResetContainer();
+        });
+
+        document.getElementById('backToLoginLink').addEventListener('click', (e) => {
+            e.preventDefault();
+            this.showAuthContainer();
+            this.isLoginMode = true;
+            this.updateAuthUI();
         });
     }
 }
