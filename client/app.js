@@ -290,7 +290,6 @@ class LinksApp {
                         </div>
                     </div>
                     <div class="link-meta">
-                        <span class="link-domain">${link.domain || 'Unknown'}</span>
                         ${link.category ? `<span class="link-category">${link.category}</span>` : ''}
                         <span class="link-date">${this.formatDate(link.timestamp)}</span>
                     </div>
