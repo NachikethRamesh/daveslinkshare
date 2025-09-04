@@ -98,12 +98,7 @@ const noticePage = `<!DOCTYPE html>
 fs.writeFileSync(path.join(distDir, 'index.html'), noticePage);
 console.log('✅ Created setup notice page');
 
-// Copy _redirects file for SPA routing
-const redirectsPath = path.join(__dirname, '_redirects');
-if (fs.existsSync(redirectsPath)) {
-    fs.copyFileSync(redirectsPath, path.join(distDir, '_redirects'));
-    console.log('✅ Copied _redirects file');
-}
+// No _redirects file needed for simple static site
 
 // Copy _headers file
 const headersPath = path.join(__dirname, '_headers');
