@@ -1260,11 +1260,28 @@ body {
     color: var(--primary-red);
 }
 
+.link-meta {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 6px 0;
+}
+
 .link-domain {
-    margin: 0 0 4px 0;
     font-size: 14px;
     color: var(--text-secondary);
     font-weight: 500;
+}
+
+.link-category {
+    background: var(--primary-red);
+    color: var(--white);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
 .link-date {
@@ -1826,7 +1843,10 @@ class LinksApp {
                     <h3 class="link-title">
                         <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
                     </h3>
-                    <p class="link-domain">\${link.domain}</p>
+                    <div class="link-meta">
+                        <span class="link-domain">\${link.domain}</span>
+                        <span class="link-category">\${link.category || 'general'}</span>
+                    </div>
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
@@ -1858,10 +1878,6 @@ class LinksApp {
     }
 
     async deleteLink(linkId) {
-        if (!confirm('Are you sure you want to delete this link?')) {
-            return;
-        }
-
         try {
             const result = await this.apiRequest(\`/links?id=\${linkId}\`, {
                 method: 'DELETE'
