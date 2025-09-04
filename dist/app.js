@@ -36,14 +36,37 @@ class LinksApp {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
+            
+            // Check if response is JSON
+            const contentType = response.headers.get('content-type');
+            let data;
+            
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
+            } else {
+                // If not JSON, get text response for debugging
+                const text = await response.text();
+                console.error(`Non-JSON response from ${endpoint}:`, text);
+                
+                // Create a generic error response
+                data = {
+                    error: response.ok ? 'Invalid response format' : `HTTP ${response.status}: ${response.statusText}`,
+                    details: text.substring(0, 200) // First 200 chars for debugging
+                };
+            }
 
             if (!response.ok) {
-                throw new Error(data.error || `HTTP ${response.status}`);
+                throw new Error(data.error || `HTTP ${response.status}: ${response.statusText}`);
             }
 
             return data;
         } catch (error) {
+            // Handle network errors or JSON parsing errors
+            if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+                console.error(`JSON Parse Error for ${endpoint}:`, error);
+                throw new Error('Server returned invalid response format');
+            }
+            
             console.error(`API Error (${endpoint}):`, error);
             throw error;
         }
