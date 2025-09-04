@@ -660,8 +660,8 @@ export default {
       return handleLinks(request, env);
     }
 
-    // Serve static HTML directly
-    if (path === '/' || path === '/index.html') {
+    // Serve static HTML for all routes (SPA)
+    if (path === '/' || path === '/index.html' || path === '/login' || path === '/signup' || path === '/home' || path === '/dashboard' || path === '/reset-password') {
       return new Response(getIndexHTML(), {
         headers: { 'Content-Type': 'text/html' }
       });
@@ -1518,12 +1518,99 @@ class LinksApp {
         this.linksCache = new Map(); // Cache for links by user
         this.pendingSaves = new Set(); // Track pending saves
         this.lastSyncTime = 0; // Track last sync for caching
+        this.currentRoute = '/';
         this.init();
     }
 
     init() {
         this.setupEventListeners();
-        this.checkAuthStatus();
+        this.setupRouting();
+        this.handleRoute();
+    }
+
+    setupRouting() {
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', () => {
+            this.handleRoute();
+        });
+    }
+
+    navigateTo(path) {
+        if (this.currentRoute !== path) {
+            this.currentRoute = path;
+            window.history.pushState({}, '', path);
+            this.handleRoute();
+        }
+    }
+
+    async handleRoute() {
+        const path = window.location.pathname;
+        this.currentRoute = path;
+
+        switch (path) {
+            case '/':
+            case '/login':
+            case '/signup':
+                if (this.token) {
+                    // If user is logged in but on auth pages, redirect to home
+                    try {
+                        const tokenData = JSON.parse(atob(this.token));
+                        if (tokenData && tokenData.username) {
+                            this.currentUser = { username: tokenData.username };
+                            // Verify token is still valid
+                            const response = await this.apiRequest('/health');
+                            if (response) {
+                                this.navigateTo('/home');
+                                return;
+                            }
+                        }
+                    } catch (error) {
+                        localStorage.removeItem('authToken');
+                        this.token = null;
+                        this.currentUser = null;
+                    }
+                }
+                this.showAuthContainer();
+                break;
+            
+            case '/reset-password':
+                this.showResetContainer();
+                break;
+                
+            case '/home':
+            case '/dashboard':
+                if (!this.token) {
+                    this.navigateTo('/login');
+                    return;
+                }
+                try {
+                    const tokenData = JSON.parse(atob(this.token));
+                    if (tokenData && tokenData.username) {
+                        this.currentUser = { username: tokenData.username };
+                        // Verify token is still valid
+                        const response = await this.apiRequest('/health');
+                        if (response) {
+                            await this.showMainApp();
+                            return;
+                        }
+                    }
+                } catch (error) {
+                    localStorage.removeItem('authToken');
+                    this.token = null;
+                    this.currentUser = null;
+                }
+                this.navigateTo('/login');
+                break;
+                
+            default:
+                // Handle unknown routes - redirect based on auth status
+                if (this.token) {
+                    this.navigateTo('/home');
+                } else {
+                    this.navigateTo('/login');
+                }
+                break;
+        }
     }
 
     async apiRequest(endpoint, options = {}) {
@@ -1572,29 +1659,6 @@ class LinksApp {
         }
     }
 
-    async checkAuthStatus() {
-        if (this.token) {
-            try {
-                // Extract user info from token
-                const tokenData = JSON.parse(atob(this.token));
-                if (tokenData && tokenData.username) {
-                    this.currentUser = { username: tokenData.username };
-                    
-                    // Verify token is still valid with server
-                    const response = await this.apiRequest('/health');
-                    if (response) {
-                        await this.showMainApp();
-                        return;
-                    }
-                }
-            } catch (error) {
-                localStorage.removeItem('authToken');
-                this.token = null;
-                this.currentUser = null;
-            }
-        }
-        this.showAuthContainer();
-    }
 
     async handleAuth(event) {
         event.preventDefault();
@@ -1617,11 +1681,12 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    await this.showMainApp();
                     this.showStatus('Login successful!', 'success');
+                    this.navigateTo('/home');
                 } else if (result.error === 'User not found') {
                     // If user doesn't exist, automatically switch to signup mode
                     this.switchToSignup();
+                    this.navigateTo('/signup');
                     this.showStatus('User not found. Please create an account.', 'info');
                     return;
                 } else if (result.error === 'Invalid credentials') {
@@ -1638,8 +1703,8 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    await this.showMainApp();
                     this.showStatus('Account created successfully!', 'success');
+                    this.navigateTo('/home');
                 }
             }
         } catch (error) {
@@ -1719,8 +1784,8 @@ class LinksApp {
                 this.token = result.token;
                 this.currentUser = result.user;
                 localStorage.setItem('authToken', this.token);
-                await this.showMainApp();
                 this.showStatus('Password reset successfully! You are now logged in.', 'success');
+                this.navigateTo('/home');
             }
         } catch (error) {
             this.showStatus(error.message, 'error');
@@ -1742,7 +1807,7 @@ class LinksApp {
             this.pendingSaves.clear(); // Clear pending saves
             this.lastSyncTime = 0; // Reset sync time
             localStorage.removeItem('authToken');
-            this.showAuthContainer();
+            this.navigateTo('/login');
         }
     }
 
@@ -1798,21 +1863,23 @@ class LinksApp {
             e.preventDefault();
             if (this.isLoginMode) {
                 this.switchToSignup();
+                this.navigateTo('/signup');
             } else {
                 this.switchToLogin();
+                this.navigateTo('/login');
             }
         });
 
         document.getElementById('resetPasswordLink').addEventListener('click', (e) => {
             e.preventDefault();
-            this.showResetContainer();
+            this.navigateTo('/reset-password');
         });
 
         document.getElementById('backToLoginLink').addEventListener('click', (e) => {
             e.preventDefault();
-            this.showAuthContainer();
             this.isLoginMode = true;
             this.updateAuthUI();
+            this.navigateTo('/login');
         });
 
         // Add link form handler
@@ -1938,6 +2005,7 @@ class LinksApp {
             if (error.message && error.message.includes('User not found')) {
                 this.logout();
                 this.switchToSignup();
+                this.navigateTo('/signup');
                 this.showStatus('Account not found. Please create an account.', 'info');
                 return;
             }
