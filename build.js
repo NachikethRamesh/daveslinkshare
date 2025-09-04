@@ -107,29 +107,7 @@ if (fs.existsSync(headersPath)) {
     console.log('✅ Copied _headers file');
 }
 
-// Copy functions directory for Cloudflare Pages Functions
-const functionsSourceDir = path.join(__dirname, 'functions');
-const functionsDestDir = path.join(distDir, 'functions');
-if (fs.existsSync(functionsSourceDir)) {
-    // Copy entire functions directory
-    const copyRecursive = (src, dest) => {
-        if (!fs.existsSync(dest)) {
-            fs.mkdirSync(dest, { recursive: true });
-        }
-        const entries = fs.readdirSync(src, { withFileTypes: true });
-        for (const entry of entries) {
-            const srcPath = path.join(src, entry.name);
-            const destPath = path.join(dest, entry.name);
-            if (entry.isDirectory()) {
-                copyRecursive(srcPath, destPath);
-            } else {
-                fs.copyFileSync(srcPath, destPath);
-            }
-        }
-    };
-    copyRecursive(functionsSourceDir, functionsDestDir);
-    console.log('✅ Copied functions directory');
-}
+// No functions directory needed for static site
 
 console.log('🎉 Build complete! Deploy with: wrangler pages deploy dist');
 console.log('📝 Don\'t forget to set environment variables in Cloudflare dashboard');
