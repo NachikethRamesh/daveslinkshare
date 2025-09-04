@@ -442,7 +442,10 @@ async function handleLinks(request, env) {
     try {
       const allData = await fetchFromBin(linksBinId, apiKey);
       // For links, we use a "links" prefix to avoid conflicts with auth data
-      const userLinks = allData[`links_${userHash}`] || [];
+      let userLinks = allData[`links_${userHash}`] || [];
+
+      // Sort links by timestamp (newest first)
+      userLinks = userLinks.sort((a, b) => new Date(b.timestamp || b.dateAdded) - new Date(a.timestamp || a.dateAdded));
 
       return createResponse({
         success: true,
