@@ -1561,54 +1561,54 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 }
 
-/* Mobile phones - Pocket-inspired design */
+/* Mobile phones - Desktop-inspired design */
 @media (max-width: 480px) {
     body {
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-        background: #f5f5f7;
-        color: #1c1c1e;
-        font-size: 15px;
-        line-height: 1.4;
+        font-family: var(--font-primary);
+        background: var(--light-gray);
+        color: var(--text-primary);
+        font-size: 14px;
+        line-height: 1.5;
     }
 
-    /* Pocket-style auth card */
+    /* Desktop-style auth card */
     .auth-card {
-        background: #ffffff;
-        padding: 32px 20px;
-        margin: 16px 12px;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: var(--white);
+        padding: 24px 16px;
+        margin: 12px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
-    /* Pocket-style main layout */
+    /* Desktop-style main layout */
     .main-content {
         grid-template-columns: 1fr;
-        gap: 20px;
+        gap: 16px;
         padding: 0 12px;
     }
 
-    /* Pocket-style sidebar (Add Link section) */
+    /* Desktop-style sidebar (Add Link section) */
     .sidebar {
         position: static;
         order: 1; /* Add Link section appears first */
         width: 100%;
-        background: #ffffff;
-        padding: 20px;
-        margin-bottom: 20px;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        background: var(--white);
+        padding: 16px;
+        margin-bottom: 16px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
     .sidebar-header {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
     .sidebar-title {
-        font-size: 18px;
-        font-weight: 600;
-        color: #1c1c1e;
+        font-size: 16px;
+        font-weight: 500;
+        color: var(--text-primary);
         margin: 0;
     }
 
@@ -1617,96 +1617,93 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .header-content {
-        padding: 16px 12px;
-        background: #ffffff;
-        margin: 16px 12px 0;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 12px 16px;
+        background: var(--white);
+        margin: 12px 12px 0;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
     .container {
-        padding: 20px 12px;
-        background: #ffffff;
-        margin: 0 12px 16px;
-        border-radius: 16px;
-        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-        border: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 16px 12px;
+        background: var(--white);
+        margin: 0 12px 12px;
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--border);
     }
 
-    /* Pocket-style typography */
+    /* Desktop-style typography */
     .app-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1c1c1e;
-        letter-spacing: -0.02em;
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--text-primary);
     }
 
     .auth-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: #1c1c1e;
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--text-primary);
         margin-bottom: 8px;
-        letter-spacing: -0.02em;
     }
 
     .auth-subtitle {
-        font-size: 16px;
-        color: #86868b;
-        margin-bottom: 24px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        margin-bottom: 20px;
     }
 
     .content-title {
-        font-size: 20px;
-        font-weight: 600;
-        color: #1c1c1e;
-        margin-bottom: 16px;
-        letter-spacing: -0.02em;
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--text-primary);
+        margin-bottom: 12px;
     }
 
-    /* Pocket-style link items (card-based) */
+    /* Smaller link items (desktop-style, compact) */
     .link-item {
-        background: #ffffff;
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        background: var(--white);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 12px; /* Reduced padding */
+        margin-bottom: 8px; /* Reduced margin */
+        box-shadow: var(--shadow);
         transition: all 0.2s ease;
     }
 
     .link-item:hover {
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-        border-color: rgba(0, 0, 0, 0.08);
+        box-shadow: var(--shadow-hover);
+        border-color: var(--primary-red);
     }
 
     .link-title {
-        font-size: 16px;
+        font-size: 14px;
         font-weight: 500;
         line-height: 1.4;
-        margin-bottom: 8px;
-        color: #1c1c1e;
+        margin-bottom: 6px;
+        color: var(--text-primary);
     }
 
     .link-title a {
-        color: #1c1c1e;
+        color: var(--text-primary);
         text-decoration: none;
-        font-weight: 600;
-    }
-
-    /* Hide the URL on mobile (Pocket style) */
-    .link-url {
-        display: none;
-    }
-
-    /* Pocket-style category tags */
-    .link-category {
-        font-size: 11px;
         font-weight: 500;
-        padding: 4px 8px;
-        border-radius: 6px;
-        background: #f2f2f7;
-        color: #636366;
+    }
+
+    /* Completely hide the URL from display */
+    .link-url {
+        display: none !important;
+    }
+
+    /* Desktop-style category tags */
+    .link-category {
+        font-size: 10px;
+        font-weight: 500;
+        padding: 2px 6px;
+        border-radius: var(--radius);
+        background: var(--light-gray);
+        color: var(--text-secondary);
         text-transform: uppercase;
         letter-spacing: 0.02em;
     }
@@ -1714,302 +1711,351 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-meta {
         display: flex;
         align-items: center;
-        gap: 8px;
-        font-size: 13px;
-        color: #86868b;
-        margin-bottom: 8px;
+        gap: 6px;
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-bottom: 6px;
     }
 
     .link-domain {
-        color: #636366;
+        color: var(--text-secondary);
         font-weight: 500;
     }
 
     .link-date {
-        font-size: 13px;
-        color: #86868b;
+        font-size: 12px;
+        color: var(--text-secondary);
     }
 
-    /* Pocket-style form elements */
+    /* Desktop-style form elements */
     .form-group {
-        margin-bottom: 16px;
+        margin-bottom: 12px;
     }
 
     .form-input, .form-select {
         width: 100%;
-        padding: 16px 12px;
+        padding: 12px;
         font-size: 16px; /* Prevents zoom on iOS */
-        border: 2px solid #e5e5ea;
-        border-radius: 12px;
-        background: #ffffff;
-        color: #1c1c1e;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        background: var(--white);
+        color: var(--text-primary);
         transition: border-color 0.2s ease;
     }
 
     .form-input:focus, .form-select:focus {
         outline: none;
-        border-color: #007aff;
-        box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+        border-color: var(--primary-red);
+        box-shadow: 0 0 0 2px rgba(239, 64, 86, 0.1);
     }
 
     .btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        padding: 16px 20px;
-        font-size: 16px;
-        font-weight: 600;
-        border-radius: 12px;
-        border: none;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-decoration: none;
-        min-height: 44px;
-    }
-
-    .btn-primary {
-        background: #007aff;
-        color: #ffffff;
-        font-weight: 600;
-        padding: 16px 24px;
-        min-height: 48px;
-    }
-
-    .btn-primary:hover {
-        background: #0056cc;
-    }
-
-    .btn-primary:active {
-        background: #004299;
-    }
-
-    /* Pocket-style action buttons */
-    .action-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
         padding: 12px 16px;
         font-size: 14px;
         font-weight: 500;
-        border-radius: 10px;
-        border: 1px solid #e5e5ea;
-        background: #ffffff;
-        color: #007aff;
+        border-radius: var(--radius);
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
         min-height: 40px;
-        min-width: 80px;
+    }
+
+    .btn-primary {
+        background: var(--primary-red);
+        color: var(--white);
+        font-weight: 500;
+        padding: 12px 20px;
+        min-height: 44px;
+    }
+
+    .btn-primary:hover {
+        background: var(--primary-red-hover);
+    }
+
+    .btn-primary:active {
+        background: var(--primary-red-hover);
+    }
+
+    /* Smaller action buttons */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px; /* Smaller padding */
+        font-size: 12px; /* Smaller font */
+        font-weight: 500;
+        border-radius: var(--radius);
+        border: 1px solid var(--border);
+        background: var(--white);
+        color: var(--primary-red);
+        min-height: 32px; /* Smaller height */
+        min-width: 60px; /* Smaller width */
         transition: all 0.2s ease;
     }
 
     .action-btn:hover {
-        background: #f2f2f7;
-        border-color: #d1d1d6;
+        background: var(--light-gray);
+        border-color: var(--gray);
     }
 
     .action-btn:active {
-        background: #e5e5ea;
+        background: var(--border);
     }
 
     .copy-btn {
-        background: #34c759;
-        color: #ffffff;
-        border-color: #34c759;
+        background: var(--primary-green);
+        color: var(--white);
+        border-color: var(--primary-green);
     }
 
     .copy-btn:hover {
-        background: #28a745;
-        border-color: #28a745;
+        background: var(--primary-green);
+        opacity: 0.9;
     }
 
     .delete-btn {
-        background: #ff3b30;
-        color: #ffffff;
-        border-color: #ff3b30;
+        background: var(--primary-red);
+        color: var(--white);
+        border-color: var(--primary-red);
     }
 
     .delete-btn:hover {
-        background: #d63027;
-        border-color: #d63027;
+        background: var(--primary-red);
+        opacity: 0.9;
     }
 
-    /* Stack action buttons vertically (Pocket style) */
+    /* Stack action buttons vertically */
     .link-actions {
         display: flex;
         flex-direction: column;
-        gap: 8px;
-        margin-top: 12px;
+        gap: 6px; /* Smaller gap */
+        margin-top: 8px; /* Smaller margin */
     }
 
     .link-actions .action-btn {
         width: 100%;
         justify-content: center;
-        font-weight: 600;
+        font-weight: 500;
     }
 
-    /* Pocket-style empty state */
+    /* Desktop-style empty state */
     .empty-state {
         text-align: center;
-        padding: 40px 20px;
-        color: #86868b;
+        padding: 32px 16px;
+        color: var(--text-secondary);
     }
 
     .empty-title {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 500;
-        margin-bottom: 8px;
-        color: #1c1c1e;
+        margin-bottom: 6px;
+        color: var(--text-primary);
     }
 
     .empty-subtitle {
-        font-size: 15px;
-        color: #86868b;
+        font-size: 14px;
+        color: var(--text-secondary);
     }
 
-    /* Pocket-style links container */
+    /* Desktop-style links container */
     .links-container {
         padding: 0;
     }
 
-    /* Pocket-style auth links */
+    /* Desktop-style auth links */
     .auth-toggle-link,
     .reset-password-link,
     .back-to-login-link {
-        color: #007aff;
+        color: var(--primary-red);
         text-decoration: none;
-        font-size: 15px;
+        font-size: 14px;
         font-weight: 500;
-        padding: 8px 4px;
-        border-radius: 6px;
+        padding: 6px 4px;
+        border-radius: var(--radius);
         transition: background-color 0.2s ease;
     }
 
     .auth-toggle-link:hover,
     .reset-password-link:hover,
     .back-to-login-link:hover {
-        background: rgba(0, 122, 255, 0.05);
+        background: rgba(239, 64, 86, 0.05);
     }
 
-    /* Pocket-style pending indicator */
+    /* Desktop-style pending indicator */
     .pending-indicator {
-        background: #ff9500;
-        color: #ffffff;
-        font-size: 11px;
+        background: var(--primary-red);
+        color: var(--white);
+        font-size: 10px;
         font-weight: 600;
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 2px 4px;
+        border-radius: var(--radius);
         text-transform: uppercase;
         letter-spacing: 0.02em;
-        margin-left: 8px;
+        margin-left: 6px;
     }
 }
 
-/* Extra small phones - Pocket-inspired design */
+/* Extra small phones - Desktop-inspired design */
 @media (max-width: 320px) {
     .auth-card {
-        padding: 24px 16px;
-        margin: 12px 8px;
-        border-radius: 14px;
+        padding: 20px 12px;
+        margin: 8px 6px;
+        border-radius: var(--radius);
     }
 
     .container {
-        padding: 16px 10px;
-        margin: 0 8px 12px;
-        border-radius: 14px;
+        padding: 14px 8px;
+        margin: 0 6px 10px;
+        border-radius: var(--radius);
     }
 
     .sidebar {
-        padding: 16px;
-        margin: 0 8px 16px;
-        border-radius: 14px;
+        padding: 14px;
+        margin: 0 6px 12px;
+        border-radius: var(--radius);
     }
 
     .header-content {
-        margin: 12px 8px 0;
-        border-radius: 14px;
+        margin: 8px 6px 0;
+        border-radius: var(--radius);
+        padding: 10px 12px;
     }
 
     .link-item {
-        padding: 14px;
-        margin-bottom: 10px;
-        border-radius: 10px;
+        padding: 10px; /* Even smaller for tiny screens */
+        margin-bottom: 6px;
+        border-radius: var(--radius);
     }
 
     .link-title {
-        font-size: 15px;
+        font-size: 13px;
+        margin-bottom: 4px;
+    }
+
+    .link-meta {
+        font-size: 11px;
+        margin-bottom: 4px;
+        gap: 4px;
+    }
+
+    .link-category {
+        font-size: 9px;
+        padding: 2px 4px;
     }
 
     .form-input, .form-select {
-        padding: 14px 10px;
-        border-radius: 10px;
+        padding: 10px 8px;
+        border-radius: var(--radius);
     }
 
     .btn {
-        padding: 14px 18px;
-        border-radius: 10px;
+        padding: 10px 14px;
+        border-radius: var(--radius);
+        font-size: 13px;
     }
 
     .btn-primary {
-        padding: 14px 20px;
+        padding: 10px 16px;
+        min-height: 40px;
     }
 
     .action-btn {
-        padding: 10px 14px;
-        font-size: 13px;
-        min-width: 70px;
-        border-radius: 8px;
-        min-height: 38px;
+        padding: 6px 10px;
+        font-size: 11px;
+        min-width: 55px;
+        border-radius: var(--radius);
+        min-height: 30px;
+    }
+
+    .link-actions {
+        gap: 4px;
+        margin-top: 6px;
     }
 
     .app-title {
-        font-size: 18px;
+        font-size: 16px;
     }
 
     .auth-title {
-        font-size: 26px;
+        font-size: 22px;
     }
 
     .content-title {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .empty-title {
+        font-size: 14px;
+    }
+
+    .empty-subtitle {
+        font-size: 13px;
+    }
+
+    .pending-indicator {
+        font-size: 9px;
+        padding: 1px 3px;
+        margin-left: 4px;
     }
 }
 
-/* Landscape orientation adjustments - Pocket-inspired design */
+/* Landscape orientation adjustments - Desktop-inspired design */
 @media (max-height: 500px) and (orientation: landscape) {
     .auth-card {
-        padding: 24px 20px;
-        margin: 12px auto;
-        border-radius: 14px;
+        padding: 20px 16px;
+        margin: 8px auto;
+        border-radius: var(--radius);
     }
 
     .main-content {
-        gap: 16px;
+        gap: 12px;
     }
 
     .sidebar {
-        padding: 16px;
-        border-radius: 12px;
+        padding: 12px;
+        border-radius: var(--radius);
+        margin-bottom: 12px;
     }
 
     .container {
-        padding: 16px 12px;
-        border-radius: 12px;
+        padding: 12px 10px;
+        border-radius: var(--radius);
+        margin-bottom: 8px;
     }
 
     .header-content {
-        padding: 12px 16px;
-        border-radius: 12px;
+        padding: 10px 12px;
+        border-radius: var(--radius);
+        margin: 8px 8px 0;
     }
 
     .link-item {
-        padding: 14px;
-        border-radius: 10px;
+        padding: 10px;
+        border-radius: var(--radius);
+        margin-bottom: 6px;
     }
 
     .auth-title {
-        font-size: 24px;
+        font-size: 20px;
     }
 
     .content-title {
-        font-size: 18px;
+        font-size: 16px;
+    }
+
+    .link-actions {
+        gap: 4px;
+        margin-top: 6px;
+    }
+
+    .action-btn {
+        padding: 6px 8px;
+        min-height: 28px;
+        min-width: 50px;
     }
 }
 
