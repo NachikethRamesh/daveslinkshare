@@ -1619,16 +1619,16 @@ button:focus, input:focus, select:focus, textarea:focus {
     .header-content {
         padding: 12px 16px;
         background: var(--white);
-        margin: 12px 12px 0;
+        margin: 6px 6px 0; /* narrower margins to increase usable width */
         border-radius: var(--radius);
         box-shadow: var(--shadow);
         border: 1px solid var(--border);
     }
 
     .container {
-        padding: 16px 12px;
+        padding: 16px 10px;
         background: var(--white);
-        margin: 0 12px 12px;
+        margin: 0 6px 8px; /* increase width of sections */
         border-radius: var(--radius);
         box-shadow: var(--shadow);
         border: 1px solid var(--border);
@@ -1665,11 +1665,16 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-item {
         background: var(--white);
         border: 1px solid var(--border);
+        border-color: #dcdcdc; /* clearer card borders on mobile */
         border-radius: var(--radius);
-        padding: 12px; /* Reduced padding */
-        margin-bottom: 8px; /* Reduced margin */
+        padding: 12px; /* keep card size the same */
+        margin-bottom: 8px;
         box-shadow: var(--shadow);
         transition: all 0.2s ease;
+        max-width: 640px; /* keep card width consistent */
+        width: 100%;
+        margin-left: auto;
+        margin-right: auto;
     }
 
     .link-item:hover {
@@ -1691,10 +1696,9 @@ button:focus, input:focus, select:focus, textarea:focus {
         font-weight: 500;
     }
 
-    /* Completely hide the URL from display */
-    .link-url {
-        display: none !important;
-    }
+    /* Completely hide the URL and domain from display */
+    .link-url { display: none !important; }
+    .link-domain { display: none !important; }
 
     /* Desktop-style category tags */
     .link-category {
@@ -1864,6 +1868,8 @@ button:focus, input:focus, select:focus, textarea:focus {
     /* Desktop-style links container */
     .links-container {
         padding: 0;
+        max-width: 680px; /* keep list width consistent while sections get wider */
+        margin: 0 auto;
     }
 
     /* Desktop-style auth links */
@@ -2454,14 +2460,8 @@ class LinksApp {
     }
 
     showStatus(message, type = 'info') {
-        const statusEl = document.getElementById('status');
-        statusEl.textContent = message;
-        statusEl.className = \`alert alert-\${type}\`;
-        statusEl.style.display = 'block';
-        
-        setTimeout(() => {
-            statusEl.style.display = 'none';
-        }, 5000);
+        // Notifications disabled site-wide per request
+        return;
     }
 
     switchToSignup() {
@@ -2738,7 +2738,7 @@ class LinksApp {
         }
 
         try {
-            const result = await this.apiRequest(\`/links?id=\${linkId}\`, {
+            const result = await this.apiRequest(`/links?id=${linkId}`, {
                 method: 'DELETE'
             });
 
@@ -2759,42 +2759,8 @@ class LinksApp {
     }
 
     showStatus(message, type = 'info') {
-        // Create or update status message
-        let statusDiv = document.getElementById('statusMessage');
-        if (!statusDiv) {
-            statusDiv = document.createElement('div');
-            statusDiv.id = 'statusMessage';
-            statusDiv.style.cssText = \`
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                padding: 12px 20px;
-                border-radius: 4px;
-                color: white;
-                font-weight: 500;
-                z-index: 1000;
-                max-width: 300px;
-                word-wrap: break-word;
-            \`;
-            document.body.appendChild(statusDiv);
-        }
-
-        // Set background color based on type
-        const colors = {
-            success: '#10b981',
-            error: '#ef4444',
-            info: '#3b82f6'
-        };
-        statusDiv.style.backgroundColor = colors[type] || colors.info;
-        statusDiv.textContent = message;
-        statusDiv.style.display = 'block';
-
-        // Auto-hide after 3 seconds
-        setTimeout(() => {
-            if (statusDiv) {
-                statusDiv.style.display = 'none';
-            }
-        }, 3000);
+        // Notifications disabled site-wide per request
+        return;
     }
 }
 
