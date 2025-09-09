@@ -983,11 +983,11 @@ class LinksApp {
     }
 
     async apiRequest(endpoint, options = {}) {
-        const url = \\\`\\\${this.apiBase}\\\${endpoint}\\\`;
+        const url = \`\${this.apiBase}\${endpoint}\`;
         const defaultOptions = {
             headers: {
                 'Content-Type': 'application/json',
-                ...(this.token && { 'Authorization': \\\`Bearer \\\${this.token}\\\` })
+                ...(this.token && { 'Authorization': \`Bearer \${this.token}\` })
             }
         };
 
@@ -1010,13 +1010,13 @@ class LinksApp {
             } else {
                 const text = await response.text();
                 data = {
-                    error: response.ok ? 'Invalid response format' : \\\`HTTP \\\${response.status}: \\\${response.statusText}\\\`,
+                    error: response.ok ? 'Invalid response format' : \`HTTP \${response.status}: \${response.statusText}\`,
                     details: text.substring(0, 200)
                 };
             }
 
             if (!response.ok) {
-                throw new Error(data.error || \\\`HTTP \\\${response.status}: \\\${response.statusText}\\\`);
+                throw new Error(data.error || \`HTTP \${response.status}: \${response.statusText}\`);
             }
 
             return data;
@@ -1097,7 +1097,7 @@ class LinksApp {
         document.getElementById('resetContainer').classList.add('hidden');
         document.getElementById('mainApp').classList.remove('hidden');
         if (this.currentUser) {
-            document.getElementById('userGreeting').textContent = \\\`\\\${this.currentUser.username}'s Links\\\`;
+            document.getElementById('userGreeting').textContent = \`\${this.currentUser.username}'s Links\`;
         }
         this.clearAddLinkForm();
         this.links = [];
@@ -1362,24 +1362,24 @@ class LinksApp {
 
     showLoadingState() {
         const linksContainer = document.getElementById('links');
-        linksContainer.innerHTML = \\\`
+        linksContainer.innerHTML = \`
             <div class="loading-state">
                 <div class="loading-spinner"></div>
                 <div class="loading-text">Loading your links...</div>
             </div>
-        \\\`;
+        \`;
     }
 
     renderLinks() {
         const linksContainer = document.getElementById('links');
         
         if (this.links.length === 0) {
-            linksContainer.innerHTML = \\\`
+            linksContainer.innerHTML = \`
                 <div class="empty-state">
                     <div class="empty-title">Your links are empty</div>
                     <div class="empty-description">Save your first link to get started</div>
                 </div>
-            \\\`;
+            \`;
             return;
         }
 
@@ -1393,29 +1393,29 @@ class LinksApp {
 
         const sortedLinks = filteredLinks.sort((a, b) => new Date(b.timestamp || b.dateAdded) - new Date(a.timestamp || a.dateAdded));
 
-        linksContainer.innerHTML = sortedLinks.map(link => \\\`
-            <div class="link-item \\\${link.isPending ? 'pending' : ''}" data-id="\\\${link.id}">
+        linksContainer.innerHTML = sortedLinks.map(link => \`
+            <div class="link-item \${link.isPending ? 'pending' : ''}" data-id="\${link.id}">
                 <div class="link-content">
                     <h3 class="link-title">
-                        <a href="\\\${link.url}" target="_blank" rel="noopener noreferrer">\\\${link.title}</a>
-                        \\\${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
+                        <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
+                        \${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
                     </h3>
                     <div class="link-meta">
-                        <span class="link-category">\\\${link.category || 'general'}</span>
+                        <span class="link-category">\${link.category || 'general'}</span>
                     </div>
-                    <p class="link-date">Added \\\${new Date(link.dateAdded).toLocaleDateString()}</p>
+                    <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
-                    <button class="action-btn mark-read" onclick="app.markAsRead('\\\${link.id}')" title="Mark as read">Mark as read</button>
-                    <button class="action-btn copy-btn" onclick="app.copyLink('\\\${link.url}')" title="Copy link" \\\${link.isPending ? 'disabled' : ''}>
+                    <button class="action-btn mark-read" onclick="app.markAsRead('\${link.id}')" title="Mark as read">Mark as read</button>
+                    <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
-                    <button class="action-btn delete-btn" onclick="app.deleteLink('\\\${link.id}')" title="Delete link" \\\${link.isPending ? 'disabled' : ''}>
+                    <button class="action-btn delete-btn" onclick="app.deleteLink('\${link.id}')" title="Delete link" \${link.isPending ? 'disabled' : ''}>
                         Delete
                     </button>
                 </div>
             </div>
-        \\\`).join('');
+        \`).join('');
     }
 
     async copyLink(url) {
