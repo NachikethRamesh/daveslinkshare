@@ -432,26 +432,33 @@ class LinksApp {
         this.renderLinks();
     }
 
-    // Mark link as read
+    // Mark link as read (with optimistic updates for better performance)
     async markAsRead(linkId) {
+        // Find the link
+        const link = this.links.find(l => l.id === linkId);
+        if (!link) return;
+
+        // Optimistic update - mark as read immediately for instant UI response
+        const originalReadStatus = link.isRead;
+        link.isRead = 1;
+        this.renderLinks(); // Instantly move to "Read" tab
+
         try {
             const result = await this.apiRequest('/links/mark-read', {
                 method: 'POST',
                 body: JSON.stringify({ linkId, isRead: 1 })
             });
 
-            if (result.success) {
-                // Update local link
-                const link = this.links.find(l => l.id === linkId);
-                if (link) {
-                    link.isRead = 1;
-                    this.renderLinks();
-                    this.showStatus('Link marked as read', 'success');
-                }
-            } else {
+            if (!result.success) {
+                // Revert on failure
+                link.isRead = originalReadStatus;
+                this.renderLinks();
                 this.showStatus('Failed to mark as read', 'error');
             }
         } catch (error) {
+            // Revert on error
+            link.isRead = originalReadStatus;
+            this.renderLinks();
             this.showStatus('Failed to mark as read', 'error');
         }
     }
