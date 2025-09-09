@@ -2879,10 +2879,10 @@ class LinksApp {
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
-                    \${link.isRead === 1 ? 
+                    ' + (link.isRead === 1 ? 
                         '<button class="action-btn mark-unread" onclick="app.markAsUnread(\'' + link.id + '\')" title="Mark as unread">Mark as unread</button>' :
                         '<button class="action-btn mark-read" onclick="app.markAsRead(\'' + link.id + '\')" title="Mark as read">Mark as read</button>'
-                    }
+                    ) + '
                     <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
