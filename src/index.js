@@ -491,7 +491,9 @@ async function handleLinks(request, env) {
         title: title || await extractTitleFromUrl(url) || 'Untitled',
         category: category || 'general',
         dateAdded: new Date().toISOString(),
-        domain: getDomainFromUrl(url)
+        timestamp: new Date().toISOString(),
+        domain: getDomainFromUrl(url),
+        isRead: 0 // Default to unread (0)
       };
 
       // Add to user's links
@@ -562,6 +564,108 @@ async function handleLinks(request, env) {
 
     } catch (error) {
       return createErrorResponse('Failed to delete link', 500);
+    }
+  }
+
+  return createErrorResponse('Method not allowed', 405);
+}
+
+// Handle mark as read/unread
+async function handleMarkRead(request, env) {
+  if (request.method === 'OPTIONS') {
+    return new Response(null, { status: 200, headers: CORS_HEADERS });
+  }
+
+  // Check authorization
+  const authHeader = request.headers.get('Authorization');
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return createErrorResponse('Authorization required', 401);
+  }
+
+  const token = authHeader.substring(7);
+  let username;
+  try {
+    const tokenData = JSON.parse(atob(token));
+    username = tokenData.username;
+  } catch (error) {
+    return createErrorResponse('Invalid token', 401);
+  }
+
+  if (!username) {
+    return createErrorResponse('Invalid token', 401);
+  }
+
+  const apiKey = env.JSONBIN_API_KEY;
+  const linksBinId = env.LINKS_BIN_ID || env.AUTH_BIN_ID;
+
+  if (!apiKey || !linksBinId) {
+    return createErrorResponse('Server configuration error', 500);
+  }
+
+  // Get user hash from auth data
+  let userHash;
+  try {
+    const authData = await fetchFromBin(env.AUTH_BIN_ID, apiKey);
+    const userData = authData[username];
+    if (!userData) {
+      return createErrorResponse('User not found', 404);
+    }
+    
+    if (!userData.userHash) {
+      return createErrorResponse('User hash not found - please re-register', 401);
+    }
+    
+    userHash = userData.userHash;
+  } catch (error) {
+    return createErrorResponse('Failed to verify user', 503);
+  }
+
+  if (request.method === 'POST') {
+    try {
+      const requestData = await request.json();
+      const { linkId, isRead } = requestData;
+
+      if (!linkId || (isRead !== 0 && isRead !== 1)) {
+        return createErrorResponse('Link ID and isRead flag (0 or 1) are required', 400);
+      }
+
+      // Get existing data
+      let allData;
+      try {
+        allData = await fetchFromBin(linksBinId, apiKey);
+      } catch (error) {
+        return createErrorResponse('Failed to fetch links', 503);
+      }
+
+      const userLinks = allData[`links_${userHash}`] || [];
+      
+      // Find and update the link
+      const linkIndex = userLinks.findIndex(link => link.id === linkId);
+      if (linkIndex === -1) {
+        return createErrorResponse('Link not found', 404);
+      }
+
+      userLinks[linkIndex].isRead = isRead;
+      
+      // Update the bin
+      const updatedData = {
+        ...allData,
+        [`links_${userHash}`]: userLinks
+      };
+
+      try {
+        await updateBin(linksBinId, apiKey, updatedData);
+      } catch (error) {
+        return createErrorResponse('Failed to update link', 503);
+      }
+
+      return createResponse({
+        success: true,
+        message: isRead === 1 ? 'Link marked as read' : 'Link marked as unread'
+      });
+
+    } catch (error) {
+      return createErrorResponse('Failed to update link status', 500);
     }
   }
 
@@ -658,6 +762,10 @@ export default {
     
     if (path.startsWith('/api/health')) {
       return handleHealth(request, env);
+    }
+
+    if (path.startsWith('/api/links/mark-read')) {
+      return handleMarkRead(request, env);
     }
 
     if (path.startsWith('/api/links')) {
