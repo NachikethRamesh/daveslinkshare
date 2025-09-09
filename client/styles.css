@@ -623,14 +623,17 @@ body {
     }
     
     .link-item {
-        padding: 12px 16px;
-        flex-direction: column;
-        gap: 12px;
-        height: 160px; /* Fixed height for consistency */
-        display: flex;
-        border: 1px solid transparent;
-        transition: all 0.2s ease;
-        justify-content: space-between;
+        padding: 12px 16px !important;
+        flex-direction: column !important;
+        gap: 12px !important;
+        height: 170px !important; /* Fixed height for consistency */
+        min-height: 170px !important;
+        max-height: 170px !important;
+        display: flex !important;
+        border: 1px solid transparent !important;
+        transition: all 0.2s ease !important;
+        justify-content: space-between !important;
+        box-sizing: border-box !important;
     }
     
     .link-item:hover {
@@ -639,25 +642,30 @@ body {
     }
     
     .link-actions {
-        opacity: 1;
-        display: flex;
-        flex-direction: row;
-        gap: 6px;
-        margin-top: 0px;
-        justify-content: space-between;
-        width: 100%;
+        opacity: 1 !important;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 6px !important;
+        margin-top: 0px !important;
+        justify-content: space-between !important;
+        width: 100% !important;
+        height: 32px !important;
+        align-items: center !important;
     }
     
     .link-actions .action-btn {
-        flex: 1;
-        min-height: 28px;
-        padding: 4px 8px;
-        font-size: 10px;
-        background: white;
-        border: none;
-        color: var(--text-primary);
-        border-radius: 15px;
-        transition: all 0.2s ease;
+        flex: 1 !important;
+        height: 28px !important;
+        min-height: 28px !important;
+        max-height: 28px !important;
+        padding: 4px 8px !important;
+        font-size: 10px !important;
+        background: white !important;
+        border: none !important;
+        color: var(--text-primary) !important;
+        border-radius: 15px !important;
+        transition: all 0.2s ease !important;
+        box-sizing: border-box !important;
     }
     
     .link-actions .action-btn:hover {

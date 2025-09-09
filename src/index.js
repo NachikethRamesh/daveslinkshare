@@ -1817,18 +1817,21 @@ button:focus, input:focus, select:focus, textarea:focus {
         background: var(--white);
         border: 1px solid transparent;
         border-radius: var(--radius);
-        padding: 12px;
-        margin-bottom: 8px;
+        padding: 12px !important;
+        margin-bottom: 8px !important;
         box-shadow: var(--shadow);
         transition: all 0.2s ease;
-        max-width: 640px;
-        width: 100%;
-        margin-left: auto;
-        margin-right: auto;
-        height: 160px; /* Fixed height instead of min-height */
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between; /* Distribute content evenly */
+        max-width: 640px !important;
+        width: 100% !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+        height: 170px !important; /* Fixed height with !important */
+        min-height: 170px !important; /* Ensure minimum height */
+        max-height: 170px !important; /* Prevent expansion */
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: space-between !important; /* Distribute content evenly */
+        box-sizing: border-box !important;
     }
 
     .link-item:hover {
@@ -1838,16 +1841,17 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .link-title {
-        font-size: 14px;
-        font-weight: 700;
-        line-height: 1.4;
-        margin-bottom: 6px;
-        color: var(--text-primary);
-        overflow: hidden;
-        text-overflow: ellipsis;
-        display: -webkit-box;
-        -webkit-line-clamp: 2; /* Limit to 2 lines */
-        -webkit-box-orient: vertical;
+        font-size: 14px !important;
+        font-weight: 700 !important;
+        line-height: 1.4 !important;
+        margin-bottom: 6px !important;
+        color: var(--text-primary) !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important; /* Limit to 2 lines */
+        -webkit-box-orient: vertical !important;
+        height: 40px !important; /* Fixed height for title area */
     }
 
     .link-title a {
@@ -1873,12 +1877,14 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .link-meta {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-bottom: 6px;
+        display: flex !important;
+        align-items: center !important;
+        gap: 6px !important;
+        font-size: 12px !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 6px !important;
+        height: 24px !important; /* Fixed height for meta area */
+        flex-shrink: 0 !important;
     }
 
     .link-domain {
@@ -1887,17 +1893,20 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .link-date {
-        font-size: 12px;
-        color: var(--text-secondary);
-        margin-bottom: 8px; /* Consistent spacing */
+        font-size: 12px !important;
+        color: var(--text-secondary) !important;
+        margin-bottom: 8px !important; /* Consistent spacing */
+        height: 18px !important; /* Fixed height for date */
+        flex-shrink: 0 !important;
     }
 
     .link-content {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-start;
-        overflow: hidden; /* Prevent content overflow */
+        flex: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        overflow: hidden !important; /* Prevent content overflow */
+        height: calc(100% - 40px) !important; /* Account for button area */
     }
 
     /* Desktop-style form elements */
@@ -1982,27 +1991,32 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     /* Horizontal action buttons row */
     .link-actions {
-        display: flex;
-        flex-direction: row;
-        gap: 6px;
-        margin-top: 0px; /* No extra margin, directly below date */
-        flex-shrink: 0;
-        justify-content: space-between; /* Distribute evenly */
-        width: 100%;
+        display: flex !important;
+        flex-direction: row !important;
+        gap: 6px !important;
+        margin-top: 0px !important; /* No extra margin, directly below date */
+        flex-shrink: 0 !important;
+        justify-content: space-between !important; /* Distribute evenly */
+        width: 100% !important;
+        height: 32px !important; /* Fixed height for button area */
+        align-items: center !important;
     }
 
     .link-actions .action-btn {
-        flex: 1;
-        justify-content: center;
-        font-weight: 500;
-        min-height: 28px; /* Smaller height */
-        padding: 4px 8px; /* Smaller padding */
-        font-size: 10px; /* Smaller font */
-        background: white;
-        border: none;
-        color: var(--text-primary);
-        border-radius: 15px;
-        transition: all 0.2s ease;
+        flex: 1 !important;
+        justify-content: center !important;
+        font-weight: 500 !important;
+        height: 28px !important; /* Fixed height */
+        min-height: 28px !important;
+        max-height: 28px !important;
+        padding: 4px 8px !important; /* Smaller padding */
+        font-size: 10px !important; /* Smaller font */
+        background: white !important;
+        border: none !important;
+        color: var(--text-primary) !important;
+        border-radius: 15px !important;
+        transition: all 0.2s ease !important;
+        box-sizing: border-box !important;
     }
 
     .link-actions .action-btn:hover {
