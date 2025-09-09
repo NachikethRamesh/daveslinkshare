@@ -1815,7 +1815,7 @@ button:focus, input:focus, select:focus, textarea:focus {
     /* Smaller link items (desktop-style, compact) */
     .link-item {
         background: var(--white);
-        border: none;
+        border: 1px solid transparent;
         border-radius: var(--radius);
         padding: 12px;
         margin-bottom: 8px;
@@ -1825,14 +1825,16 @@ button:focus, input:focus, select:focus, textarea:focus {
         width: 100%;
         margin-left: auto;
         margin-right: auto;
-        min-height: 140px; /* Increased for consistent height */
+        height: 160px; /* Fixed height instead of min-height */
         display: flex;
         flex-direction: column;
+        justify-content: space-between; /* Distribute content evenly */
     }
 
     .link-item:hover {
         box-shadow: var(--shadow-hover);
         transform: translateY(-1px);
+        border-color: var(--primary-red);
     }
 
     .link-title {
@@ -1841,6 +1843,11 @@ button:focus, input:focus, select:focus, textarea:focus {
         line-height: 1.4;
         margin-bottom: 6px;
         color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2; /* Limit to 2 lines */
+        -webkit-box-orient: vertical;
     }
 
     .link-title a {
@@ -1890,6 +1897,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        overflow: hidden; /* Prevent content overflow */
     }
 
     /* Desktop-style form elements */
@@ -1976,10 +1984,11 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-actions {
         display: flex;
         flex-direction: row;
-        gap: 4px;
+        gap: 6px;
         margin-top: 0px; /* No extra margin, directly below date */
         flex-shrink: 0;
-        justify-content: flex-start;
+        justify-content: space-between; /* Distribute evenly */
+        width: 100%;
     }
 
     .link-actions .action-btn {
@@ -1989,6 +1998,16 @@ button:focus, input:focus, select:focus, textarea:focus {
         min-height: 28px; /* Smaller height */
         padding: 4px 8px; /* Smaller padding */
         font-size: 10px; /* Smaller font */
+        background: white;
+        border: none;
+        color: var(--text-primary);
+        border-radius: 15px;
+        transition: all 0.2s ease;
+    }
+
+    .link-actions .action-btn:hover {
+        background: var(--primary-red) !important;
+        color: white !important;
     }
 
     /* Desktop-style empty state */
