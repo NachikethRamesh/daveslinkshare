@@ -1472,18 +1472,6 @@ body {
     color: white;
 }
 
-.action-btn.mark-unread {
-    background: #6c757d;
-    color: white;
-    padding: 6px 12px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-.action-btn.mark-unread:hover {
-    background: #5a6268;
-    color: white;
-}
 
 /* Tabs */
 .tabs {
@@ -2879,10 +2867,7 @@ class LinksApp {
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
-                    ' + (link.isRead === 1 ? 
-                        '<button class="action-btn mark-unread" onclick="app.markAsUnread(\'' + link.id + '\')" title="Mark as unread">Mark as unread</button>' :
-                        '<button class="action-btn mark-read" onclick="app.markAsRead(\'' + link.id + '\')" title="Mark as read">Mark as read</button>'
-                    ) + '
+                    <button class="action-btn mark-read" onclick="app.markAsRead('\${link.id}')" title="Mark as read">Mark as read</button>
                     <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
@@ -2989,29 +2974,6 @@ class LinksApp {
         }
     }
 
-    // Mark link as unread
-    async markAsUnread(linkId) {
-        try {
-            const result = await this.apiRequest('/links/mark-read', {
-                method: 'POST',
-                body: JSON.stringify({ linkId, isRead: 0 })
-            });
-
-            if (result.success) {
-                // Update local link
-                const link = this.links.find(l => l.id === linkId);
-                if (link) {
-                    link.isRead = 0;
-                    this.renderLinks();
-                    this.showStatus('Link marked as unread', 'success');
-                }
-            } else {
-                this.showStatus('Failed to mark as unread', 'error');
-            }
-        } catch (error) {
-            this.showStatus('Failed to mark as unread', 'error');
-        }
-    }
 }
 
 // Initialize app when DOM is loaded
