@@ -343,7 +343,7 @@ function getIndexHTML() {
 }
 
 function getStylesCSS() {
-  return \`/* Dave's Links - Modern Clean Design */
+  return `/* Dave's Links - Modern Clean Design */
 :root {
     --primary-red: #ef4056;
     --primary-red-hover: #d73648;
@@ -874,11 +874,11 @@ body {
         text-align: center;
     }
 }
-\`;
+`;
 }
 
 function getAppJS() {
-  return \`// Dave's Links App - Client-side JavaScript
+  return `// Dave's Links App - Client-side JavaScript
 class LinksApp {
     constructor() {
         this.links = [];
@@ -1526,5 +1526,5 @@ class LinksApp {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new LinksApp();
 });
-\`;
+`;
 }

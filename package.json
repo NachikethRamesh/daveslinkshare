@@ -5,7 +5,13 @@
   "main": "client/index.html",
   "scripts": {
     "build": "node build.js",
-    "deploy": "node build.js"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "setup:d1": "node scripts/setup-d1.js",
+    "migrate:jsonbin": "node scripts/migrate-from-jsonbin.js",
+    "verify:migration": "node scripts/verify-migration.js",
+    "deploy:complete": "node scripts/deploy.js",
+    "postinstall": "echo '💡 Run npm run setup:d1 to create your D1 database'"
   },
   "keywords": [
     "link-sharing",
