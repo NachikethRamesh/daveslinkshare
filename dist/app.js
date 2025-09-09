@@ -294,10 +294,7 @@ class LinksApp {
                             </a>
                         </h3>
                         <div class="link-actions">
-                            ${link.isRead === 1 ? 
-                                `<button class="action-btn mark-unread" onclick="app.markAsUnread('${link.id}')" title="Mark as unread">Mark as unread</button>` :
-                                `<button class="action-btn mark-read" onclick="app.markAsRead('${link.id}')" title="Mark as read">Mark as read</button>`
-                            }
+                            <button class="action-btn mark-read" onclick="app.markAsRead('${link.id}')" title="Mark as read">Mark as read</button>
                             <button class="btn-icon copy-btn" onclick="app.copyToClipboard('${link.url}')" title="Copy URL">
                                 📋
                             </button>
@@ -435,53 +432,37 @@ class LinksApp {
         this.renderLinks();
     }
 
-    // Mark link as read
+    // Mark link as read (with optimistic updates for better performance)
     async markAsRead(linkId) {
+        // Find the link
+        const link = this.links.find(l => l.id === linkId);
+        if (!link) return;
+
+        // Optimistic update - mark as read immediately for instant UI response
+        const originalReadStatus = link.isRead;
+        link.isRead = 1;
+        this.renderLinks(); // Instantly move to "Read" tab
+
         try {
             const result = await this.apiRequest('/links/mark-read', {
                 method: 'POST',
                 body: JSON.stringify({ linkId, isRead: 1 })
             });
 
-            if (result.success) {
-                // Update local link
-                const link = this.links.find(l => l.id === linkId);
-                if (link) {
-                    link.isRead = 1;
-                    this.renderLinks();
-                    this.showStatus('Link marked as read', 'success');
-                }
-            } else {
+            if (!result.success) {
+                // Revert on failure
+                link.isRead = originalReadStatus;
+                this.renderLinks();
                 this.showStatus('Failed to mark as read', 'error');
             }
         } catch (error) {
+            // Revert on error
+            link.isRead = originalReadStatus;
+            this.renderLinks();
             this.showStatus('Failed to mark as read', 'error');
         }
     }
 
-    // Mark link as unread
-    async markAsUnread(linkId) {
-        try {
-            const result = await this.apiRequest('/links/mark-read', {
-                method: 'POST',
-                body: JSON.stringify({ linkId, isRead: 0 })
-            });
-
-            if (result.success) {
-                // Update local link
-                const link = this.links.find(l => l.id === linkId);
-                if (link) {
-                    link.isRead = 0;
-                    this.renderLinks();
-                    this.showStatus('Link marked as unread', 'success');
-                }
-            } else {
-                this.showStatus('Failed to mark as unread', 'error');
-            }
-        } catch (error) {
-            this.showStatus('Failed to mark as unread', 'error');
-        }
-    }
 }
 
 // Initialize app when DOM is ready
