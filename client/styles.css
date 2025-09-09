@@ -471,10 +471,10 @@ body {
 .tabs {
     display: flex;
     justify-content: center;
-    margin: 20px 0;
+    margin: 17px 0;
     background: #f5f5f5;
-    border-radius: 25px;
-    padding: 4px;
+    border-radius: 21px;
+    padding: 3px;
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
@@ -483,25 +483,34 @@ body {
 .tab-button {
     background: transparent;
     border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
+    outline: none;
+    padding: 8px 17px;
+    border-radius: 17px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: #666;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-width: 100px;
+    min-width: 85px;
 }
 
 .tab-button:hover {
     color: var(--text-primary);
+    outline: none;
+}
+
+.tab-button:focus {
+    outline: none;
+    border: none;
 }
 
 .tab-button.active {
     background: white;
     color: var(--text-primary);
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+    border: none;
 }
 
 /* Empty State */

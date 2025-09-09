@@ -1454,10 +1454,10 @@ body {
 .tabs {
     display: flex;
     justify-content: center;
-    margin: 20px 0;
+    margin: 17px 0;
     background: #f5f5f5;
-    border-radius: 25px;
-    padding: 4px;
+    border-radius: 21px;
+    padding: 3px;
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
@@ -1466,25 +1466,34 @@ body {
 .tab-button {
     background: transparent;
     border: none;
-    padding: 10px 20px;
-    border-radius: 20px;
+    outline: none;
+    padding: 8px 17px;
+    border-radius: 17px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 500;
     color: #666;
     transition: all 0.3s ease;
     white-space: nowrap;
-    min-width: 100px;
+    min-width: 85px;
 }
 
 .tab-button:hover {
     color: #1a1a1a;
+    outline: none;
+}
+
+.tab-button:focus {
+    outline: none;
+    border: none;
 }
 
 .tab-button.active {
     background: white;
     color: #1a1a1a;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    outline: none;
+    border: none;
 }
 
 /* Loading and Pending States */
@@ -2051,10 +2060,10 @@ button:focus, input:focus, select:focus, textarea:focus {
     .tabs {
         display: flex !important;
         justify-content: center !important;
-        margin: 20px 0 !important;
+        margin: 17px 0 !important;
         background: #f5f5f5 !important;
-        border-radius: 25px !important;
-        padding: 4px !important;
+        border-radius: 21px !important;
+        padding: 3px !important;
         width: fit-content !important;
         margin-left: auto !important;
         margin-right: auto !important;
@@ -2063,25 +2072,34 @@ button:focus, input:focus, select:focus, textarea:focus {
     .tab-button {
         background: transparent !important;
         border: none !important;
-        padding: 10px 20px !important;
-        border-radius: 20px !important;
+        outline: none !important;
+        padding: 8px 17px !important;
+        border-radius: 17px !important;
         cursor: pointer !important;
-        font-size: 14px !important;
+        font-size: 12px !important;
         font-weight: 500 !important;
         color: #666 !important;
         transition: all 0.3s ease !important;
         white-space: nowrap !important;
-        min-width: 100px !important;
+        min-width: 85px !important;
     }
 
     .tab-button:hover {
         color: #1a1a1a !important;
+        outline: none !important;
+    }
+
+    .tab-button:focus {
+        outline: none !important;
+        border: none !important;
     }
 
     .tab-button.active {
         background: white !important;
         color: #1a1a1a !important;
         box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+        outline: none !important;
+        border: none !important;
     }
 }
 
