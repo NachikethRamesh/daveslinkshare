@@ -602,7 +602,7 @@ class LinksApp {
             <div class="link-content">
                 <h3 class="link-title">
                     <button class="star-icon ${isFavorite ? 'favorite' : ''}" 
-                            onclick="app.toggleFavorite('${link.id}', ${isFavorite ? 'false' : 'true'})" 
+                            onclick="app.toggleFavorite('${link.id}', ${!isFavorite})" 
                             title="${isFavorite ? 'Remove from favorites' : 'Add to favorites'}">★</button>
                     <a href="${link.url}" target="_blank" rel="noopener noreferrer">${link.title}</a>
                     ${isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
