@@ -6,6 +6,7 @@ class LinksApp {
         this.token = localStorage.getItem('authToken');
         this.isLoginMode = true;
         this.apiBase = '/api';
+        this.currentTab = 'unread'; // Default to 'To be read' tab
         
         this.init();
     }
@@ -271,7 +272,19 @@ class LinksApp {
             return;
         }
 
-        const linksHTML = this.links.map(link => `
+        // Filter links based on current tab
+        const filteredLinks = this.links.filter(link => {
+            if (this.currentTab === 'read') {
+                return link.isRead === 1;
+            } else {
+                return !link.isRead || link.isRead === 0;
+            }
+        });
+
+        // Sort links by timestamp (newest first)
+        const sortedLinks = filteredLinks.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        const linksHTML = sortedLinks.map(link => `
             <div class="link-item" data-id="${link.id}">
                 <div class="link-content">
                     <div class="link-header">
@@ -281,6 +294,10 @@ class LinksApp {
                             </a>
                         </h3>
                         <div class="link-actions">
+                            ${link.isRead === 1 ? 
+                                `<button class="action-btn mark-unread" onclick="app.markAsUnread('${link.id}')" title="Mark as unread">Mark as unread</button>` :
+                                `<button class="action-btn mark-read" onclick="app.markAsRead('${link.id}')" title="Mark as read">Mark as read</button>`
+                            }
                             <button class="btn-icon copy-btn" onclick="app.copyToClipboard('${link.url}')" title="Copy URL">
                                 📋
                             </button>
@@ -290,7 +307,6 @@ class LinksApp {
                         </div>
                     </div>
                     <div class="link-meta">
-                        <span class="link-domain">${link.domain || 'Unknown'}</span>
                         ${link.category ? `<span class="link-category">${link.category}</span>` : ''}
                         <span class="link-date">${this.formatDate(link.timestamp)}</span>
                     </div>
@@ -401,6 +417,70 @@ class LinksApp {
                 }
             }, 100);
         });
+
+        // Tab switching
+        document.getElementById('unreadTab').addEventListener('click', () => this.switchTab('unread'));
+        document.getElementById('readTab').addEventListener('click', () => this.switchTab('read'));
+    }
+
+    // Tab switching functionality
+    switchTab(tab) {
+        this.currentTab = tab;
+        
+        // Update tab button styles
+        document.getElementById('unreadTab').classList.toggle('active', tab === 'unread');
+        document.getElementById('readTab').classList.toggle('active', tab === 'read');
+        
+        // Re-render links with new filter
+        this.renderLinks();
+    }
+
+    // Mark link as read
+    async markAsRead(linkId) {
+        try {
+            const result = await this.apiRequest('/links/mark-read', {
+                method: 'POST',
+                body: JSON.stringify({ linkId, isRead: 1 })
+            });
+
+            if (result.success) {
+                // Update local link
+                const link = this.links.find(l => l.id === linkId);
+                if (link) {
+                    link.isRead = 1;
+                    this.renderLinks();
+                    this.showStatus('Link marked as read', 'success');
+                }
+            } else {
+                this.showStatus('Failed to mark as read', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to mark as read', 'error');
+        }
+    }
+
+    // Mark link as unread
+    async markAsUnread(linkId) {
+        try {
+            const result = await this.apiRequest('/links/mark-read', {
+                method: 'POST',
+                body: JSON.stringify({ linkId, isRead: 0 })
+            });
+
+            if (result.success) {
+                // Update local link
+                const link = this.links.find(l => l.id === linkId);
+                if (link) {
+                    link.isRead = 0;
+                    this.renderLinks();
+                    this.showStatus('Link marked as unread', 'success');
+                }
+            } else {
+                this.showStatus('Failed to mark as unread', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to mark as unread', 'error');
+        }
     }
 }
 

@@ -468,6 +468,61 @@ body {
     color: var(--pocket-red);
 }
 
+.action-btn.mark-read {
+    background: #1877f2;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.action-btn.mark-read:hover {
+    background: #166fe5;
+    color: white;
+}
+
+.action-btn.mark-unread {
+    background: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.action-btn.mark-unread:hover {
+    background: #5a6268;
+    color: white;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.tab-button {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: var(--light-gray);
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    background: var(--primary-red);
+    color: white;
+    border-color: var(--primary-red);
+}
+
 /* Empty State */
 .empty-state {
     text-align: center;

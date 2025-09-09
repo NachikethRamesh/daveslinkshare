@@ -987,6 +987,10 @@ function getIndexHTML() {
                 <main class="content-area">
                     <div class="content-header">
                         <h2 class="content-title">My Links</h2>
+                        <div class="tabs">
+                            <button id="unreadTab" class="tab-button active">To be read</button>
+                            <button id="readTab" class="tab-button">Read</button>
+                        </div>
                     </div>
                     <div id="links" class="links-container">
                         <div class="empty-state">
@@ -1453,6 +1457,61 @@ body {
     background: var(--primary-red);
     border-color: var(--primary-red);
     color: var(--white);
+}
+
+.action-btn.mark-read {
+    background: #1877f2;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.action-btn.mark-read:hover {
+    background: #166fe5;
+    color: white;
+}
+
+.action-btn.mark-unread {
+    background: #6c757d;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 4px;
+    font-weight: 500;
+}
+
+.action-btn.mark-unread:hover {
+    background: #5a6268;
+    color: white;
+}
+
+/* Tabs */
+.tabs {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.tab-button {
+    background: none;
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--text-secondary);
+    transition: all 0.2s ease;
+}
+
+.tab-button:hover {
+    background: var(--light-gray);
+    color: var(--text-primary);
+}
+
+.tab-button.active {
+    background: var(--primary-red);
+    color: white;
+    border-color: var(--primary-red);
 }
 
 /* Loading and Pending States */
@@ -2241,6 +2300,7 @@ class LinksApp {
         this.pendingSaves = new Set(); // Track pending saves
         this.lastSyncTime = 0; // Track last sync for caching
         this.currentRoute = '/';
+        this.currentTab = 'unread'; // Default to 'To be read' tab
         this.init();
     }
 
@@ -2637,6 +2697,10 @@ class LinksApp {
 
         // Add link form handler
         document.getElementById('addLinkForm').addEventListener('submit', (e) => this.handleAddLink(e));
+        
+        // Tab switching
+        document.getElementById('unreadTab').addEventListener('click', () => this.switchTab('unread'));
+        document.getElementById('readTab').addEventListener('click', () => this.switchTab('read'));
     }
 
     async handleAddLink(event) {
@@ -2789,7 +2853,19 @@ class LinksApp {
             return;
         }
 
-        linksContainer.innerHTML = this.links.map(link => \`
+        // Filter links based on current tab
+        const filteredLinks = this.links.filter(link => {
+            if (this.currentTab === 'read') {
+                return link.isRead === 1;
+            } else {
+                return !link.isRead || link.isRead === 0;
+            }
+        });
+
+        // Sort links by timestamp (newest first)
+        const sortedLinks = filteredLinks.sort((a, b) => new Date(b.timestamp || b.dateAdded) - new Date(a.timestamp || a.dateAdded));
+
+        linksContainer.innerHTML = sortedLinks.map(link => \`
             <div class="link-item \${link.isPending ? 'pending' : ''}" data-id="\${link.id}">
                 <div class="link-content">
                     <h3 class="link-title">
@@ -2803,6 +2879,10 @@ class LinksApp {
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
+                    \${link.isRead === 1 ? 
+                        '<button class="action-btn mark-unread" onclick="app.markAsUnread(\'' + link.id + '\')" title="Mark as unread">Mark as unread</button>' :
+                        '<button class="action-btn mark-read" onclick="app.markAsRead(\'' + link.id + '\')" title="Mark as read">Mark as read</button>'
+                    }
                     <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
@@ -2871,6 +2951,66 @@ class LinksApp {
     showStatus(message, type = 'info') {
         // Notifications disabled site-wide per request
         return;
+    }
+
+    // Tab switching functionality
+    switchTab(tab) {
+        this.currentTab = tab;
+        
+        // Update tab button styles
+        document.getElementById('unreadTab').classList.toggle('active', tab === 'unread');
+        document.getElementById('readTab').classList.toggle('active', tab === 'read');
+        
+        // Re-render links with new filter
+        this.renderLinks();
+    }
+
+    // Mark link as read
+    async markAsRead(linkId) {
+        try {
+            const result = await this.apiRequest('/links/mark-read', {
+                method: 'POST',
+                body: JSON.stringify({ linkId, isRead: 1 })
+            });
+
+            if (result.success) {
+                // Update local link
+                const link = this.links.find(l => l.id === linkId);
+                if (link) {
+                    link.isRead = 1;
+                    this.renderLinks();
+                    this.showStatus('Link marked as read', 'success');
+                }
+            } else {
+                this.showStatus('Failed to mark as read', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to mark as read', 'error');
+        }
+    }
+
+    // Mark link as unread
+    async markAsUnread(linkId) {
+        try {
+            const result = await this.apiRequest('/links/mark-read', {
+                method: 'POST',
+                body: JSON.stringify({ linkId, isRead: 0 })
+            });
+
+            if (result.success) {
+                // Update local link
+                const link = this.links.find(l => l.id === linkId);
+                if (link) {
+                    link.isRead = 0;
+                    this.renderLinks();
+                    this.showStatus('Link marked as unread', 'success');
+                }
+            } else {
+                this.showStatus('Failed to mark as unread', 'error');
+            }
+        } catch (error) {
+            this.showStatus('Failed to mark as unread', 'error');
+        }
     }
 }
 
