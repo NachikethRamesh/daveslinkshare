@@ -987,10 +987,10 @@ function getIndexHTML() {
                 <main class="content-area">
                     <div class="content-header">
                         <h2 class="content-title">My Links</h2>
-                        <div class="tabs">
-                            <button id="unreadTab" class="tab-button active">To be read</button>
-                            <button id="readTab" class="tab-button">Read</button>
-                        </div>
+                    </div>
+                    <div class="tabs">
+                        <button id="unreadTab" class="tab-button active">To be read</button>
+                        <button id="readTab" class="tab-button">Read</button>
                     </div>
                     <div id="links" class="links-container">
                         <div class="empty-state">
@@ -1366,7 +1366,7 @@ body {
 .link-title {
     margin: 0 0 8px 0;
     font-size: 16px;
-    font-weight: 500;
+    font-weight: 700;
     line-height: 1.4;
     display: flex;
     flex-direction: column;
@@ -1407,12 +1407,12 @@ body {
 .link-category {
     background: var(--primary-red);
     color: var(--white);
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 600;
-    padding: 2px 8px;
-    border-radius: 12px;
+    padding: 2px 7px;
+    border-radius: 10px;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 0.4px;
 }
 
 .link-date {
@@ -1429,13 +1429,13 @@ body {
 }
 
 .action-btn {
-    background: #e3f2fd;
-    border: 1px solid #bbdefb;
+    background: white;
+    border: 1px solid var(--border);
     color: var(--text-primary);
     cursor: pointer;
-    padding: 8px 12px;
+    padding: 7px 10px;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: 10px;
     font-weight: 500;
     transition: all 0.2s ease;
     white-space: nowrap;
@@ -1453,30 +1453,38 @@ body {
 /* Tabs */
 .tabs {
     display: flex;
-    gap: 8px;
-    margin-top: 12px;
+    justify-content: center;
+    margin: 20px 0;
+    background: #f5f5f5;
+    border-radius: 25px;
+    padding: 4px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .tab-button {
-    background: none;
-    border: 1px solid var(--border);
-    padding: 8px 16px;
-    border-radius: 4px;
+    background: transparent;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 20px;
     cursor: pointer;
     font-size: 14px;
-    color: var(--text-secondary);
-    transition: all 0.2s ease;
+    font-weight: 500;
+    color: #666;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+    min-width: 100px;
 }
 
 .tab-button:hover {
-    background: var(--light-gray);
     color: var(--text-primary);
 }
 
 .tab-button.active {
-    background: var(--primary-red);
-    color: white;
-    border-color: var(--primary-red);
+    background: white;
+    color: var(--text-primary);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 /* Loading and Pending States */
