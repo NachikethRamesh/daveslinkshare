@@ -450,7 +450,7 @@ body {
 
 .action-btn {
     background: white;
-    border: 1px solid var(--border);
+    border: none;
     color: var(--text-primary);
     cursor: pointer;
     padding: 7px 10px;
@@ -462,7 +462,6 @@ body {
 
 .action-btn:hover {
     background: var(--primary-red);
-    border-color: var(--primary-red);
     color: white;
 }
 
@@ -627,6 +626,8 @@ body {
         padding: 12px 16px;
         flex-direction: column;
         gap: 12px;
+        min-height: 120px; /* Ensure consistent minimum height */
+        justify-content: space-between;
     }
     
     .link-actions {

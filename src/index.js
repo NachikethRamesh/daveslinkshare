@@ -1430,7 +1430,7 @@ body {
 
 .action-btn {
     background: white;
-    border: 1px solid var(--border);
+    border: none;
     color: var(--text-primary);
     cursor: pointer;
     padding: 7px 10px;
@@ -1443,7 +1443,6 @@ body {
 
 .action-btn:hover {
     background: var(--primary-red);
-    border-color: var(--primary-red);
     color: white;
 }
 
@@ -1816,22 +1815,25 @@ button:focus, input:focus, select:focus, textarea:focus {
     /* Smaller link items (desktop-style, compact) */
     .link-item {
         background: var(--white);
-        border: 1px solid var(--border);
-        border-color: #dcdcdc; /* clearer card borders on mobile */
+        border: none;
         border-radius: var(--radius);
-        padding: 12px; /* keep card size the same */
+        padding: 12px;
         margin-bottom: 8px;
         box-shadow: var(--shadow);
         transition: all 0.2s ease;
-        max-width: 640px; /* keep card width consistent */
+        max-width: 640px;
         width: 100%;
         margin-left: auto;
         margin-right: auto;
+        min-height: 120px; /* Ensure consistent minimum height */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .link-item:hover {
         box-shadow: var(--shadow-hover);
-        border-color: var(--primary-red);
+        transform: translateY(-1px);
     }
 
     .link-title {
@@ -1881,6 +1883,14 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-date {
         font-size: 12px;
         color: var(--text-secondary);
+        margin-bottom: 8px; /* Consistent spacing */
+    }
+
+    .link-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0; /* Allow shrinking */
     }
 
     /* Desktop-style form elements */
@@ -1945,7 +1955,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         font-size: 12px; /* Smaller font */
         font-weight: 500;
         border-radius: 15px;
-        border: 1px solid var(--border);
+        border: none;
         background: white;
         color: var(--text-primary);
         min-height: 32px; /* Smaller height */
@@ -1955,7 +1965,6 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     .action-btn:hover {
         background: var(--primary-red);
-        border-color: var(--primary-red);
         color: white;
     }
 
@@ -1968,14 +1977,16 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-actions {
         display: flex;
         flex-direction: column;
-        gap: 6px; /* Smaller gap */
-        margin-top: 8px; /* Smaller margin */
+        gap: 6px;
+        margin-top: 8px;
+        flex-shrink: 0; /* Prevent shrinking */
     }
 
     .link-actions .action-btn {
         width: 100%;
         justify-content: center;
         font-weight: 500;
+        min-height: 32px; /* Consistent height */
     }
 
     /* Desktop-style empty state */
