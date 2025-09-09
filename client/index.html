@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Dave's Links</title>
+    <meta name="description" content="Save and organize your links like Pocket">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔗</text></svg>">
+</head>
+<body>
+    <!-- Authentication Container -->
+    <div id="authContainer" class="auth-container">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 id="authTitle" class="auth-title">Welcome back</h1>
+                <p id="authSubtitle" class="auth-subtitle">Sign in to your account</p>
+            </div>
+            
+            <form id="authForm">
+                <div class="form-group">
+                    <label for="username" class="form-label">Username</label>
+                    <input 
+                        type="text" 
+                        id="username" 
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        required 
+                        autocomplete="username"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="password" class="form-label">Password</label>
+                    <input 
+                        type="password" 
+                        id="password" 
+                        class="form-input" 
+                        placeholder="Enter your password"
+                        required 
+                        autocomplete="current-password"
+                    >
+                </div>
+                
+                <button type="submit" id="authSubmit" class="btn btn-primary btn-full">
+                    Sign In
+                </button>
+            </form>
+            
+            <div class="auth-toggle">
+                <span id="authToggleText">Don't have an account?</span>
+                <a id="authToggleLink" class="auth-toggle-link">Sign up</a>
+            </div>
+            
+            <div class="auth-reset">
+                <a id="resetPasswordLink" class="auth-reset-link">Forgot your password?</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password Reset Container -->
+    <div id="resetContainer" class="auth-container hidden">
+        <div class="auth-card">
+            <div class="auth-header">
+                <h1 class="auth-title">Reset Password</h1>
+                <p class="auth-subtitle">Enter your username and new password</p>
+            </div>
+            
+            <form id="resetForm">
+                <div class="form-group">
+                    <label for="resetUsername" class="form-label">Username</label>
+                    <input 
+                        type="text" 
+                        id="resetUsername" 
+                        class="form-input" 
+                        placeholder="Enter your username"
+                        required 
+                        autocomplete="username"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="newPassword" class="form-label">New Password</label>
+                    <input 
+                        type="password" 
+                        id="newPassword" 
+                        class="form-input" 
+                        placeholder="Enter new password (min 6 characters)"
+                        required 
+                        autocomplete="new-password"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirmPassword" class="form-label">Confirm New Password</label>
+                    <input 
+                        type="password" 
+                        id="confirmPassword" 
+                        class="form-input" 
+                        placeholder="Confirm new password"
+                        required 
+                        autocomplete="new-password"
+                    >
+                </div>
+                
+                <button type="submit" id="resetSubmit" class="btn btn-primary btn-full">
+                    Reset Password
+                </button>
+            </form>
+            
+            <div class="auth-toggle">
+                <a id="backToLoginLink" class="auth-toggle-link">← Back to Sign In</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="mainApp" class="app hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-content">
+                <h1 class="app-title">
+                     🔗 <span id="userGreeting">My Links</span>
+                </h1>
+                <button id="logoutBtn" class="logout-btn">Log out</button>
+            </div>
+        </header>
+
+        <!-- Main Content -->
+        <div class="container">
+            <div class="main-content">
+                <!-- Sidebar -->
+                <aside class="sidebar">
+                    <div class="sidebar-header">
+                        <h2 class="sidebar-title">Add Link</h2>
+                    </div>
+                    <form id="addLinkForm" class="add-link-form">
+                        <div class="form-group">
+                            <label for="url" class="form-label">URL</label>
+                            <input 
+                                type="url" 
+                                id="url" 
+                                class="form-input" 
+                                placeholder="https://example.com"
+                                required
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="title" class="form-label">Title (optional)</label>
+                            <input 
+                                type="text" 
+                                id="title" 
+                                class="form-input" 
+                                placeholder="Custom title"
+                            >
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="category" class="form-label">Category</label>
+                            <select id="category" class="form-select">
+                                <option value="">Select Category</option>
+                                <option value="Sports">Sports</option>
+                                <option value="Entertainment">Entertainment</option>
+                                <option value="Work">Work</option>
+                                <option value="Business">Business</option>
+                                <option value="Reading">Reading</option>
+                                <option value="Technology">Technology</option>
+                                <option value="Education">Education</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" id="addBtn" class="btn btn-primary btn-full">
+                            Save
+                        </button>
+                    </form>
+                </aside>
+
+                <!-- Content Area -->
+                <main class="content-area">
+                    <div class="content-header">
+                        <h2 class="content-title">My Links</h2>
+                    </div>
+                    <div class="tabs">
+                        <button id="unreadTab" class="tab-button active">To be read</button>
+                        <button id="readTab" class="tab-button">Read</button>
+                        <button id="favoritesTab" class="tab-button">Favorites</button>
+                    </div>
+                    <div id="links" class="links-container">
+                        <div class="empty-state">
+                             <div class="empty-icon">📖</div>
+                            <div class="empty-title">Your links are empty</div>
+                            <div class="empty-description">Save your first link to get started</div>
+                        </div>
+                    </div>
+                </main>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status/Alert Container -->
+    <div id="status" class="alert"></div>
+
+    <!-- Scripts -->
+    <script src="app.js"></script>
+</body>
+</html>

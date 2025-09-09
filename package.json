@@ -1,0 +1,26 @@
+{
+  "name": "daves-link-sharing-app",
+  "version": "1.0.0",
+  "description": "A secure link sharing application with Cloudflare Workers and D1 Database",
+  "main": "src/index.js",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "setup:d1": "node scripts/setup-d1.js",
+    "deploy:complete": "node scripts/deploy.js",
+    "postinstall": "echo '💡 Run npm run setup:d1 to create your D1 database'"
+  },
+  "keywords": [
+    "link-sharing",
+    "bookmark",
+    "pocket-alternative",
+    "cloudflare-pages",
+    "serverless"
+  ],
+  "author": "Dave",
+  "license": "MIT",
+  "engines": {
+    "node": ">=16.0.0",
+    "npm": ">=8.0.0"
+  }
+}
