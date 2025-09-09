@@ -1777,9 +1777,9 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
     .container {
-        padding: 16px 10px;
+        padding: 16px 0px !important; /* Remove horizontal padding for consistent width */
         background: var(--white);
-        margin: 0 6px 8px; /* increase width of sections */
+        margin: 0 6px 8px !important; /* consistent margins */
         border-radius: var(--radius);
         box-shadow: var(--shadow);
         border: 1px solid var(--border);
@@ -1814,17 +1814,17 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     /* Smaller link items (desktop-style, compact) */
     .link-item {
-        background: var(--white);
-        border: 1px solid transparent;
-        border-radius: var(--radius);
+        background: var(--white) !important;
+        border: 1px solid var(--border) !important; /* Visible border like desktop */
+        border-radius: var(--radius) !important;
         padding: 12px !important;
         margin-bottom: 8px !important;
-        box-shadow: var(--shadow);
-        transition: all 0.2s ease;
-        max-width: 640px !important;
-        width: 100% !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
+        margin-left: 6px !important; /* Consistent margins */
+        margin-right: 6px !important; /* Consistent margins */
+        box-shadow: var(--shadow) !important;
+        transition: all 0.2s ease !important;
+        width: calc(100% - 12px) !important; /* Account for margins */
+        max-width: calc(640px - 12px) !important; /* Consistent max width */
         height: 170px !important; /* Fixed height with !important */
         min-height: 170px !important; /* Ensure minimum height */
         max-height: 170px !important; /* Prevent expansion */
@@ -1832,6 +1832,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         flex-direction: column !important;
         justify-content: space-between !important; /* Distribute content evenly */
         box-sizing: border-box !important;
+        position: relative !important;
     }
 
     .link-item:hover {
