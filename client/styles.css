@@ -647,6 +647,34 @@ body {
         transform: translateY(-1px);
     }
     
+    .link-title {
+        height: 36px !important;
+        max-height: 36px !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        display: -webkit-box !important;
+        -webkit-line-clamp: 2 !important;
+        -webkit-box-orient: vertical !important;
+        word-wrap: break-word !important;
+        hyphens: auto !important;
+        line-height: 1.3 !important;
+    }
+    
+    .link-category {
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 120px !important;
+        display: inline-block !important;
+    }
+    
+    .link-date {
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
+    }
+    
     .link-actions {
         opacity: 1 !important;
         display: flex !important;
@@ -664,7 +692,7 @@ body {
         height: 28px !important;
         min-height: 28px !important;
         max-height: 28px !important;
-        padding: 4px 8px !important;
+        padding: 4px 6px !important;
         font-size: 10px !important;
         background: white !important;
         border: none !important;
@@ -672,6 +700,10 @@ body {
         border-radius: 15px !important;
         transition: all 0.2s ease !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100px !important;
     }
     
     .link-actions .action-btn:hover {

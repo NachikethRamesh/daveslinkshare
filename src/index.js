@@ -1844,15 +1844,18 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-title {
         font-size: 14px !important;
         font-weight: 700 !important;
-        line-height: 1.4 !important;
+        line-height: 1.3 !important;
         margin-bottom: 6px !important;
         color: var(--text-primary) !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         display: -webkit-box !important;
-        -webkit-line-clamp: 2 !important; /* Limit to 2 lines */
+        -webkit-line-clamp: 2 !important; /* Limit to exactly 2 lines */
         -webkit-box-orient: vertical !important;
-        height: 40px !important; /* Fixed height for title area */
+        height: 36px !important; /* Fixed height for exactly 2 lines */
+        max-height: 36px !important;
+        word-wrap: break-word !important;
+        hyphens: auto !important;
     }
 
     .link-title a {
@@ -1867,14 +1870,19 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     /* Desktop-style category tags */
     .link-category {
-        font-size: 9px;
-        font-weight: 500;
-        padding: 2px 7px;
-        border-radius: 10px;
-        background: var(--primary-red);
-        color: var(--white);
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
+        font-size: 9px !important;
+        font-weight: 500 !important;
+        padding: 2px 7px !important;
+        border-radius: 10px !important;
+        background: var(--primary-red) !important;
+        color: var(--white) !important;
+        text-transform: uppercase !important;
+        letter-spacing: 0.4px !important;
+        white-space: nowrap !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        max-width: 120px !important; /* Fixed max width for category */
+        display: inline-block !important;
     }
 
     .link-meta {
@@ -1899,6 +1907,10 @@ button:focus, input:focus, select:focus, textarea:focus {
         margin-bottom: 8px !important; /* Consistent spacing */
         height: 18px !important; /* Fixed height for date */
         flex-shrink: 0 !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100% !important;
     }
 
     .link-content {
@@ -1908,6 +1920,8 @@ button:focus, input:focus, select:focus, textarea:focus {
         justify-content: flex-start !important;
         overflow: hidden !important; /* Prevent content overflow */
         height: calc(100% - 40px) !important; /* Account for button area */
+        max-height: calc(100% - 40px) !important;
+        min-height: 0 !important; /* Allow shrinking */
     }
 
     /* Desktop-style form elements */
@@ -2010,7 +2024,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         height: 28px !important; /* Fixed height */
         min-height: 28px !important;
         max-height: 28px !important;
-        padding: 4px 8px !important; /* Smaller padding */
+        padding: 4px 6px !important; /* Smaller padding for more space */
         font-size: 10px !important; /* Smaller font */
         background: white !important;
         border: none !important;
@@ -2018,6 +2032,10 @@ button:focus, input:focus, select:focus, textarea:focus {
         border-radius: 15px !important;
         transition: all 0.2s ease !important;
         box-sizing: border-box !important;
+        overflow: hidden !important;
+        text-overflow: ellipsis !important;
+        white-space: nowrap !important;
+        max-width: 100px !important; /* Fixed max width for buttons */
     }
 
     .link-actions .action-btn:hover {
