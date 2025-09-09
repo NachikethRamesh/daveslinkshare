@@ -1632,120 +1632,344 @@ button:focus, input:focus, select:focus, textarea:focus {
     display: none !important;
 }
 
-/* Responsive Design */
+/* Responsive Design - Mobile-First Approach Based on Desktop Design */
 
-/* Large tablets and small desktops */
-@media (max-width: 1024px) and (min-width: 769px) {
-    .container {
-        max-width: 95%;
-        padding: 20px;
-    }
-    
+/* Tablets (768px and up) */
+@media (min-width: 768px) {
     .main-content {
-        gap: 20px;
+        grid-template-columns: 300px 1fr;
+        gap: 24px;
+        padding: 0 20px;
     }
     
     .sidebar {
-        width: 300px;
-    }
-    
-    .link-item {
-        padding: 16px;
-    }
-}
-
-/* Tablets (portrait) */
-@media (max-width: 768px) and (min-width: 481px) {
-    .auth-card {
-        padding: 32px 24px;
-        margin: 20px;
-        max-width: 400px;
-    }
-
-    .main-content {
-        grid-template-columns: 1fr;
-        gap: 20px;
-        padding: 0 16px;
-    }
-
-    .sidebar {
-        position: static;
-        order: 2;
-        width: 100%;
-        max-width: none;
-        padding: 20px;
-        margin-bottom: 20px;
-    }
-
-    .content-area {
         order: 1;
     }
-
-    .header-content {
-        padding: 16px 20px;
-    }
-
-    .container {
-        padding: 20px 16px;
-    }
-
-    .app-title {
-        font-size: 20px;
-    }
     
-    .link-item {
-        padding: 16px;
-        margin-bottom: 12px;
-    }
-    
-    .form-group {
-        margin-bottom: 16px;
-    }
-    
-    .form-input, .form-select, .btn {
-        padding: 12px 16px;
-        font-size: 16px; /* Prevents zoom on iOS */
-    }
-    
-    .btn-primary {
-        padding: 14px 20px;
+    .content-area {
+        order: 2;
     }
 }
 
-/* Mobile phones - Desktop-inspired design */
-@media (max-width: 480px) {
+/* Mobile devices (767px and below) */
+@media (max-width: 767px) {
     body {
-        font-family: var(--font-primary);
-        background: var(--light-gray);
-        color: var(--text-primary);
         font-size: 14px;
-        line-height: 1.5;
+        background: var(--pocket-light-gray);
     }
-
-    /* Desktop-style auth card */
+    
+    /* Auth card responsive */
     .auth-card {
-        background: var(--white);
-        padding: 24px 16px;
-        margin: 12px;
-        border-radius: var(--radius);
-        box-shadow: var(--shadow);
-        border: 1px solid var(--border);
+        margin: 16px;
+        padding: 24px 20px;
+        max-width: none;
     }
-
-    /* Desktop-style main layout */
+    
+    /* Main layout - single column */
     .main-content {
         grid-template-columns: 1fr;
         gap: 16px;
         padding: 0 12px;
     }
-
-    /* Desktop-style sidebar (Add Link section) */
+    
+    /* Sidebar becomes top section */
     .sidebar {
         position: static;
-        order: 1; /* Add Link section appears first */
+        order: 1;
         width: 100%;
         background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
         padding: 16px;
+    }
+    
+    .content-area {
+        order: 2;
+    }
+    
+    /* Container adjustments */
+    .container {
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
+        padding: 16px;
+    }
+    
+    /* Header content */
+    .header-content {
+        padding: 16px;
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
+    }
+    
+    /* Link items - desktop style adapted for mobile */
+    .link-item {
+        display: flex;
+        flex-direction: column;
+        padding: 16px;
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 12px;
+        transition: all 0.2s ease;
+        gap: 12px;
+    }
+    
+    .link-item:hover {
+        box-shadow: var(--shadow-hover);
+        border-color: var(--pocket-red);
+        transform: translateY(-1px);
+    }
+    
+    /* Link content structure */
+    .link-content {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .link-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--text-primary);
+        line-height: 1.3;
+        margin: 0;
+    }
+    
+    .link-title a {
+        color: var(--text-primary);
+        text-decoration: none;
+    }
+    
+    /* Hide URL on mobile */
+    .link-url {
+        display: none;
+    }
+    
+    .link-meta {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-light);
+    }
+    
+    .link-category {
+        background: var(--pocket-light-gray);
+        color: var(--text-secondary);
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 10px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .link-date {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 4px;
+    }
+    
+    /* Action buttons - horizontal row */
+    .link-actions {
+        display: flex;
+        flex-direction: row;
+        gap: 8px;
+        margin-top: 8px;
+        opacity: 1;
+    }
+    
+    .action-btn {
+        flex: 1;
+        background: white;
+        border: none;
+        color: var(--text-primary);
+        cursor: pointer;
+        padding: 8px 12px;
+        border-radius: 15px;
+        font-size: 11px;
+        font-weight: 500;
+        transition: all 0.2s ease;
+        text-align: center;
+        min-height: 32px;
+    }
+    
+    .action-btn:hover {
+        background: var(--pocket-red);
+        color: white;
+    }
+    
+    /* Form elements */
+    .form-input, .form-select {
+        font-size: 16px; /* Prevent zoom on iOS */
+        padding: 12px;
+        border: 1px solid var(--pocket-border);
+        border-radius: var(--radius);
+    }
+    
+    .btn {
+        min-height: 44px; /* Better touch targets */
+        padding: 12px 20px;
+        font-size: 14px;
+    }
+    
+    /* Typography adjustments */
+    .app-title {
+        font-size: 18px;
+    }
+    
+    .content-title {
+        font-size: 18px;
+        margin-bottom: 16px;
+    }
+    
+    .sidebar-title {
+        font-size: 16px;
+        margin-bottom: 16px;
+    }
+}
+
+/* Small mobile devices (480px and below) */
+@media (max-width: 480px) {
+    .auth-card {
+        margin: 12px;
+        padding: 20px 16px;
+    }
+    
+    .main-content {
+        padding: 0 8px;
+        gap: 12px;
+    }
+    
+    .container, .sidebar, .header-content {
+        margin-bottom: 12px;
+        padding: 12px;
+    }
+    
+    .link-item {
+        padding: 12px;
+        margin-bottom: 8px;
+    }
+    
+    .link-title {
+        font-size: 15px;
+    }
+    
+    .action-btn {
+        padding: 6px 8px;
+        font-size: 10px;
+        min-height: 28px;
+    }
+    
+    .app-title {
+        font-size: 16px;
+    }
+    
+    .content-title {
+        font-size: 16px;
+    }
+}
+
+/* Very small devices (320px and below) */
+@media (max-width: 320px) {
+    .auth-card {
+        margin: 8px;
+        padding: 16px 12px;
+    }
+    
+    .main-content {
+        padding: 0 6px;
+    }
+    
+    .container, .sidebar, .header-content {
+        padding: 10px;
+        margin-bottom: 10px;
+    }
+    
+    .link-item {
+        padding: 10px;
+        margin-bottom: 6px;
+    }
+    
+    .link-title {
+        font-size: 14px;
+    }
+    
+    .link-category {
+        font-size: 9px;
+        padding: 2px 6px;
+    }
+    
+    .action-btn {
+        padding: 4px 6px;
+        font-size: 9px;
+        min-height: 26px;
+    }
+}
+
+/* IE/Edge specific fixes */
+input::-ms-clear {
+    display: none;
+}
+
+/* Focus styles for accessibility */
+.btn:focus, .form-input:focus, .form-select:focus, .auth-toggle-link:focus {
+    outline: 2px solid var(--primary-red);
+    outline-offset: 2px;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    :root {
+        --pocket-red: #cc0000;
+        --pocket-green: #006600;
+        --text-primary: #000000;
+        --text-secondary: #333333;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}`;
+}
+
+function getAppJS() {
+  return `// Simplified app.js for Workers deployment
+class LinksApp {
+    constructor() {
+        this.links = [];
+        this.currentUser = null;
+        this.token = localStorage.getItem('authToken');
+        this.isLoginMode = true;
+        this.apiBase = '/api';
+        this.linksCache = new Map(); // Cache for links by user
+        this.pendingSaves = new Set(); // Track pending saves
+        this.lastSyncTime = 0; // Track last sync for caching
+        this.currentRoute = '/';
+        this.currentTab = 'unread'; // Default to 'To be read' tab
+        this.init();
+    }
+
+    init() {
+        this.setupEventListeners();
+        this.setupRouting();
+        this.handleRoute();
+    }
         margin-bottom: 16px;
         border-radius: var(--radius);
         box-shadow: var(--shadow);

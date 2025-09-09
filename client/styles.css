@@ -587,18 +587,81 @@ body {
     pointer-events: none;
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .header-content {
-        padding: 12px 16px;
+/* Responsive Design - Mobile-First Approach Based on Desktop Design */
+
+/* Tablets (768px and up) */
+@media (min-width: 768px) {
+    .main-content {
+        grid-template-columns: 300px 1fr;
+        gap: 24px;
+        padding: 0 20px;
     }
     
-    .app-title {
-        font-size: 18px;
+    .sidebar {
+        order: 1;
     }
     
+    .content-area {
+        order: 2;
+    }
+}
+
+/* Mobile devices (767px and below) */
+@media (max-width: 767px) {
+    body {
+        font-size: 14px;
+        background: var(--pocket-light-gray);
+    }
+    
+    /* Auth card responsive */
+    .auth-card {
+        margin: 16px;
+        padding: 24px 20px;
+        max-width: none;
+    }
+    
+    /* Main layout - single column */
+    .main-content {
+        grid-template-columns: 1fr;
+        gap: 16px;
+        padding: 0 12px;
+    }
+    
+    /* Sidebar becomes top section */
+    .sidebar {
+        position: static;
+        order: 1;
+        width: 100%;
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
+        padding: 16px;
+    }
+    
+    .content-area {
+        order: 2;
+    }
+    
+    /* Container adjustments */
     .container {
-        padding: 16px 0px; /* Remove horizontal padding for consistent width */
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
+        padding: 16px;
+    }
+    
+    /* Header content */
+    .header-content {
+        padding: 16px;
+        background: var(--white);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--pocket-border);
+        margin-bottom: 16px;
     }
     
     .main-content {
