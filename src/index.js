@@ -2686,7 +2686,6 @@ class LinksApp {
                 <div class="link-content">
                     <h3 class="link-title">
                         <a href="\${link.url}" target="_blank" rel="noopener noreferrer">\${link.title}</a>
-                        <span class="link-url">\${link.url}</span>
                         \${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
                     </h3>
                     <div class="link-meta">
