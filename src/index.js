@@ -1429,51 +1429,25 @@ body {
 }
 
 .action-btn {
-    background: var(--background);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 6px 12px;
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 4px;
     font-size: 12px;
     font-weight: 500;
-    color: var(--text-secondary);
-    cursor: pointer;
     transition: all 0.2s ease;
     white-space: nowrap;
 }
 
 .action-btn:hover {
-    background: var(--white);
-    border-color: var(--primary-red);
-    color: var(--primary-red);
-}
-
-.copy-btn:hover {
-    background: var(--primary-green);
-    border-color: var(--primary-green);
-    color: var(--white);
-}
-
-.delete-btn:hover {
     background: var(--primary-red);
     border-color: var(--primary-red);
-    color: var(--white);
+    color: white;
 }
 
-.action-btn.mark-read {
-    background: none;
-    border: none;
-    color: var(--text-light);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 2px;
-    font-size: 12px;
-    transition: all 0.2s ease;
-}
 
-.action-btn.mark-read:hover {
-    color: var(--text-primary);
-    background: #e3f2fd;
-}
 
 
 /* Tabs */

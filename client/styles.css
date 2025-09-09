@@ -449,39 +449,21 @@ body {
 }
 
 .action-btn {
-    background: none;
-    border: none;
-    color: var(--text-light);
+    background: #e3f2fd;
+    border: 1px solid #bbdefb;
+    color: var(--text-primary);
     cursor: pointer;
-    padding: 4px;
-    border-radius: 2px;
+    padding: 8px 12px;
+    border-radius: 4px;
     font-size: 12px;
+    font-weight: 500;
     transition: all 0.2s ease;
 }
 
 .action-btn:hover {
-    color: var(--text-primary);
-    background: var(--pocket-light-gray);
-}
-
-.action-btn.delete:hover {
-    color: var(--pocket-red);
-}
-
-.action-btn.mark-read {
-    background: none;
-    border: none;
-    color: var(--text-light);
-    cursor: pointer;
-    padding: 4px;
-    border-radius: 2px;
-    font-size: 12px;
-    transition: all 0.2s ease;
-}
-
-.action-btn.mark-read:hover {
-    color: var(--text-primary);
-    background: #e3f2fd;
+    background: var(--primary-red);
+    border-color: var(--primary-red);
+    color: white;
 }
 
 
