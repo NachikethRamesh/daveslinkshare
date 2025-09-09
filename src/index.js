@@ -1478,12 +1478,12 @@ body {
 }
 
 .tab-button:hover {
-    color: var(--text-primary);
+    color: #1a1a1a;
 }
 
 .tab-button.active {
     background: white;
-    color: var(--text-primary);
+    color: #1a1a1a;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
@@ -2045,6 +2045,43 @@ button:focus, input:focus, select:focus, textarea:focus {
         text-transform: uppercase;
         letter-spacing: 0.02em;
         margin-left: 6px;
+    }
+
+    /* Mobile-specific tab styles */
+    .tabs {
+        display: flex !important;
+        justify-content: center !important;
+        margin: 20px 0 !important;
+        background: #f5f5f5 !important;
+        border-radius: 25px !important;
+        padding: 4px !important;
+        width: fit-content !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
+    }
+
+    .tab-button {
+        background: transparent !important;
+        border: none !important;
+        padding: 10px 20px !important;
+        border-radius: 20px !important;
+        cursor: pointer !important;
+        font-size: 14px !important;
+        font-weight: 500 !important;
+        color: #666 !important;
+        transition: all 0.3s ease !important;
+        white-space: nowrap !important;
+        min-width: 100px !important;
+    }
+
+    .tab-button:hover {
+        color: #1a1a1a !important;
+    }
+
+    .tab-button.active {
+        background: white !important;
+        color: #1a1a1a !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
     }
 }
 
