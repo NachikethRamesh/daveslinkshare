@@ -2,8 +2,7 @@ name = "daveslinkshare"
 main = "src/index.js"
 compatibility_date = "2025-01-01"
 
-[build]
-command = "npm run build"
+# No build command needed for Cloudflare Worker
 
 # Cloudflare D1 Database Configuration
 # Run: npx wrangler d1 create daves-links-db
