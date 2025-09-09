@@ -1434,7 +1434,7 @@ body {
     color: var(--text-primary);
     cursor: pointer;
     padding: 7px 10px;
-    border-radius: 4px;
+    border-radius: 15px;
     font-size: 10px;
     font-weight: 500;
     transition: all 0.2s ease;
@@ -1454,7 +1454,7 @@ body {
 .tabs {
     display: flex;
     justify-content: center;
-    margin: 17px 0;
+    margin: 17px 0 10px 0;
     background: #f5f5f5;
     border-radius: 21px;
     padding: 3px;
@@ -1836,7 +1836,7 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     .link-title {
         font-size: 14px;
-        font-weight: 500;
+        font-weight: 700;
         line-height: 1.4;
         margin-bottom: 6px;
         color: var(--text-primary);
@@ -1845,7 +1845,7 @@ button:focus, input:focus, select:focus, textarea:focus {
     .link-title a {
         color: var(--text-primary);
         text-decoration: none;
-        font-weight: 500;
+        font-weight: 700;
     }
 
     /* Completely hide the URL and domain from display */
@@ -1854,14 +1854,14 @@ button:focus, input:focus, select:focus, textarea:focus {
 
     /* Desktop-style category tags */
     .link-category {
-        font-size: 10px;
+        font-size: 9px;
         font-weight: 500;
-        padding: 2px 6px;
-        border-radius: var(--radius);
-        background: var(--light-gray);
-        color: var(--text-secondary);
+        padding: 2px 7px;
+        border-radius: 10px;
+        background: var(--primary-red);
+        color: var(--white);
         text-transform: uppercase;
-        letter-spacing: 0.02em;
+        letter-spacing: 0.4px;
     }
 
     .link-meta {
@@ -1944,45 +1944,25 @@ button:focus, input:focus, select:focus, textarea:focus {
         padding: 8px 12px; /* Smaller padding */
         font-size: 12px; /* Smaller font */
         font-weight: 500;
-        border-radius: var(--radius);
+        border-radius: 15px;
         border: 1px solid var(--border);
-        background: var(--white);
-        color: var(--primary-red);
+        background: white;
+        color: var(--text-primary);
         min-height: 32px; /* Smaller height */
         min-width: 60px; /* Smaller width */
         transition: all 0.2s ease;
     }
 
     .action-btn:hover {
-        background: var(--light-gray);
-        border-color: var(--gray);
+        background: var(--primary-red);
+        border-color: var(--primary-red);
+        color: white;
     }
 
     .action-btn:active {
         background: var(--border);
     }
 
-    .copy-btn {
-        background: var(--primary-green);
-        color: var(--white);
-        border-color: var(--primary-green);
-    }
-
-    .copy-btn:hover {
-        background: var(--primary-green);
-        opacity: 0.9;
-    }
-
-    .delete-btn {
-        background: var(--primary-red);
-        color: var(--white);
-        border-color: var(--primary-red);
-    }
-
-    .delete-btn:hover {
-        background: var(--primary-red);
-        opacity: 0.9;
-    }
 
     /* Stack action buttons vertically */
     .link-actions {
@@ -2060,7 +2040,7 @@ button:focus, input:focus, select:focus, textarea:focus {
     .tabs {
         display: flex !important;
         justify-content: center !important;
-        margin: 17px 0 !important;
+        margin: 17px 0 10px 0 !important;
         background: #f5f5f5 !important;
         border-radius: 21px !important;
         padding: 3px !important;
@@ -2171,7 +2151,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         padding: 6px 10px;
         font-size: 11px;
         min-width: 55px;
-        border-radius: var(--radius);
+        border-radius: 15px;
         min-height: 30px;
     }
 
@@ -2260,6 +2240,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         padding: 6px 8px;
         min-height: 28px;
         min-width: 50px;
+        border-radius: 15px;
     }
 }
 
@@ -2901,7 +2882,6 @@ class LinksApp {
                         \${link.isPending ? '<span class="pending-indicator">Saving...</span>' : ''}
                     </h3>
                     <div class="link-meta">
-                        <span class="link-domain">\${link.domain}</span>
                         <span class="link-category">\${link.category || 'general'}</span>
                     </div>
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
