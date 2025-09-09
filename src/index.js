@@ -1825,10 +1825,9 @@ button:focus, input:focus, select:focus, textarea:focus {
         width: 100%;
         margin-left: auto;
         margin-right: auto;
-        min-height: 120px; /* Ensure consistent minimum height */
+        min-height: 140px; /* Increased for consistent height */
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
     }
 
     .link-item:hover {
@@ -1890,7 +1889,7 @@ button:focus, input:focus, select:focus, textarea:focus {
         flex: 1;
         display: flex;
         flex-direction: column;
-        min-height: 0; /* Allow shrinking */
+        justify-content: flex-start;
     }
 
     /* Desktop-style form elements */
@@ -1973,20 +1972,23 @@ button:focus, input:focus, select:focus, textarea:focus {
     }
 
 
-    /* Stack action buttons vertically */
+    /* Horizontal action buttons row */
     .link-actions {
         display: flex;
-        flex-direction: column;
-        gap: 6px;
-        margin-top: 8px;
-        flex-shrink: 0; /* Prevent shrinking */
+        flex-direction: row;
+        gap: 4px;
+        margin-top: 0px; /* No extra margin, directly below date */
+        flex-shrink: 0;
+        justify-content: flex-start;
     }
 
     .link-actions .action-btn {
-        width: 100%;
+        flex: 1;
         justify-content: center;
         font-weight: 500;
-        min-height: 32px; /* Consistent height */
+        min-height: 28px; /* Smaller height */
+        padding: 4px 8px; /* Smaller padding */
+        font-size: 10px; /* Smaller font */
     }
 
     /* Desktop-style empty state */
