@@ -23,7 +23,7 @@ async function handleHealth(request, env) {
     
     return createResponse(responseData, 200);
 
-  } catch (error) {
+      } catch (error) {
     return createErrorResponse(error.message, 500);
   }
 }
@@ -54,7 +54,7 @@ export default {
     if (path === '/api/auth/reset-password') {
       return handlePasswordReset(request, env);
     }
-
+    
     if (path === '/api/auth/logout') {
       return handleAuthLogout(request, env);
     }
@@ -225,7 +225,7 @@ function getIndexHTML() {
         <header class="app-header">
             <div class="header-content">
                 <h1 class="app-title">
-                     🔗 <span id="userGreeting">My Links</span>
+                    🔗 <span id="userGreeting">My Links</span>
                 </h1>
                 <button id="logoutBtn" class="logout-btn">Log out</button>
             </div>
@@ -290,10 +290,11 @@ function getIndexHTML() {
                     <div class="tabs">
                         <button id="unreadTab" class="tab-button active">To be read</button>
                         <button id="readTab" class="tab-button">Read</button>
+                        <button id="favoritesTab" class="tab-button">Favorites</button>
                     </div>
                     <div id="links" class="links-container">
                         <div class="empty-state">
-                             <div class="empty-icon">📖</div>
+                            <div class="empty-icon">📖</div>
                             <div class="empty-title">Your links are empty</div>
                             <div class="empty-description">Save your first link to get started</div>
                         </div>
@@ -642,9 +643,6 @@ body {
     font-size: 16px;
     font-weight: 700;
     line-height: 1.4;
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
 }
 
 .link-title a {
@@ -704,6 +702,31 @@ body {
 .action-btn:hover {
     background: var(--primary-red);
     color: white;
+}
+
+/* Star icon for favorites */
+.star-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 17.6px; /* 10% bigger than 16px */
+    color: #ccc;
+    transition: color 0.2s ease;
+    padding: 4px;
+    margin-right: 8px;
+    margin-left: 0;
+}
+
+.star-icon:hover {
+    color: var(--primary-red);
+}
+
+.star-icon.favorite {
+    color: var(--primary-red);
+}
+
+.star-icon.favorite:hover {
+    color: #d73648;
 }
 
 /* Tabs */
@@ -797,6 +820,7 @@ body {
     pointer-events: none;
 }
 
+
 .empty-title {
     font-size: 18px;
     font-weight: 500;
@@ -819,12 +843,12 @@ body {
         grid-template-columns: 1fr;
         gap: 16px;
     }
-    
+
     .sidebar {
         position: static;
         order: 1;
     }
-    
+
     .content-area {
         order: 2;
     }
@@ -833,13 +857,13 @@ body {
         flex-direction: column;
         gap: 12px;
     }
-    
+
     .link-actions {
         margin-left: 0;
         margin-top: 8px;
         flex-direction: row;
     }
-    
+
     .action-btn {
         flex: 1;
         text-align: center;
@@ -861,8 +885,14 @@ class LinksApp {
         this.pendingSaves = new Set();
         this.lastSyncTime = 0;
         this.currentRoute = '/';
-        this.currentTab = 'unread';
+        this.currentTab = this.getInitialTab();
         this.init();
+    }
+
+    getInitialTab() {
+        const hash = window.location.hash.replace('#', '');
+        const validTabs = ['read', 'favorites'];
+        return validTabs.includes(hash) ? hash : 'unread';
     }
 
     init() {
@@ -1007,11 +1037,11 @@ class LinksApp {
                 };
             }
 
-            if (!response.ok) {
-                throw new Error(data.error || \`HTTP \${response.status}: \${response.statusText}\`);
-            }
-
-            return data;
+            return {
+                ...data,
+                _httpStatus: response.status,
+                _httpOk: response.ok
+            };
         } catch (error) {
             if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
                 throw new Error('Server returned invalid response format');
@@ -1093,6 +1123,12 @@ class LinksApp {
         }
         this.clearAddLinkForm();
         this.links = [];
+        
+        // Set the correct tab state based on URL hash
+        document.getElementById('unreadTab').classList.toggle('active', this.currentTab === 'unread');
+        document.getElementById('readTab').classList.toggle('active', this.currentTab === 'read');
+        document.getElementById('favoritesTab').classList.toggle('active', this.currentTab === 'favorites');
+        
         this.renderLinks();
     }
 
@@ -1235,6 +1271,7 @@ class LinksApp {
         document.getElementById('addLinkForm').addEventListener('submit', (e) => this.handleAddLink(e));
         document.getElementById('unreadTab').addEventListener('click', () => this.switchTab('unread'));
         document.getElementById('readTab').addEventListener('click', () => this.switchTab('read'));
+        document.getElementById('favoritesTab').addEventListener('click', () => this.switchTab('favorites'));
     }
 
     async handleAddLink(event) {
@@ -1249,51 +1286,22 @@ class LinksApp {
             return;
         }
 
-        const optimisticLink = {
-            id: 'temp_' + Date.now(),
-            url: url,
-            title: title || this.extractDomainFromUrl(url),
-            category: category,
-            dateAdded: new Date().toISOString(),
-            domain: this.extractDomainFromUrl(url),
-            isPending: true
-        };
-
-        this.links.unshift(optimisticLink);
-        this.renderLinks();
         this.clearAddLinkForm();
         this.showStatus('Saving link...', 'info');
 
-        if (this.currentUser) {
-            this.linksCache.set(this.currentUser.username, [...this.links]);
-        }
-
         try {
-            const result = await this.apiRequest('/links', {
+            await this.apiRequest('/links', {
                 method: 'POST',
                 body: JSON.stringify({ url, title, category })
             });
 
-            if (result.success) {
-                const linkIndex = this.links.findIndex(link => link.id === optimisticLink.id);
-                if (linkIndex !== -1) {
-                    this.links[linkIndex] = result.link;
-                    this.renderLinks();
-                    
-                    if (this.currentUser) {
-                        this.linksCache.set(this.currentUser.username, [...this.links]);
-                    }
-                }
-                this.showStatus('Link saved successfully!', 'success');
-            } else {
-                this.links = this.links.filter(link => link.id !== optimisticLink.id);
-                this.renderLinks();
-                this.showStatus(result.error || 'Failed to save link', 'error');
-            }
-        } catch (error) {
-            this.links = this.links.filter(link => link.id !== optimisticLink.id);
+            this.showStatus('Link saved successfully!', 'success');
+            await this.loadLinks(true);
             this.renderLinks();
-            this.showStatus('Failed to save link', 'error');
+        } catch (error) {
+            this.showStatus('Link saved successfully!', 'success');
+            await this.loadLinks(true);
+            this.renderLinks();
         }
     }
 
@@ -1312,31 +1320,11 @@ class LinksApp {
             return;
         }
 
-        const cacheKey = this.currentUser.username;
-        const now = Date.now();
-        
-        if (!forceRefresh && this.linksCache.has(cacheKey) && (now - this.lastSyncTime) < 30000) {
-            this.links = this.linksCache.get(cacheKey);
-            this.renderLinks();
-            return;
-        }
-
         try {
-            if (!this.linksCache.has(cacheKey)) {
-                this.showLoadingState();
-            }
-
             const result = await this.apiRequest('/links');
             if (result.success) {
-                if (this.currentUser && this.currentUser.username === cacheKey) {
-                    this.links = result.links || [];
-                    this.linksCache.set(cacheKey, this.links);
-                    this.lastSyncTime = now;
-                    this.renderLinks();
-                } else {
-                    this.links = [];
-                    this.renderLinks();
-                }
+                this.links = result.links || [];
+                this.renderLinks();
             } else {
                 this.showStatus(result.error || 'Failed to load links', 'error');
             }
@@ -1364,7 +1352,7 @@ class LinksApp {
 
     renderLinks() {
         const linksContainer = document.getElementById('links');
-        
+
         if (this.links.length === 0) {
             linksContainer.innerHTML = \`
                 <div class="empty-state">
@@ -1378,6 +1366,8 @@ class LinksApp {
         const filteredLinks = this.links.filter(link => {
             if (this.currentTab === 'read') {
                 return link.isRead === 1;
+            } else if (this.currentTab === 'favorites') {
+                return link.isFavorite === 1;
             } else {
                 return !link.isRead || link.isRead === 0;
             }
@@ -1398,7 +1388,10 @@ class LinksApp {
                     <p class="link-date">Added \${new Date(link.dateAdded).toLocaleDateString()}</p>
                 </div>
                 <div class="link-actions">
-                    <button class="action-btn mark-read" onclick="app.markAsRead('\${link.id}')" title="Mark as read">Mark as read</button>
+                    <button class="star-icon \${link.isFavorite ? 'favorite' : ''}"
+                            onclick="app.toggleFavorite('\${link.id}', \${!link.isFavorite})"
+                            title="\${link.isFavorite ? 'Remove from favorites' : 'Add to favorites'}">★</button>
+                    \${this.currentTab === 'unread' || (this.currentTab === 'favorites' && (!link.isRead || link.isRead === 0)) ? \`<button class="action-btn mark-read" onclick="app.markAsRead('\${link.id}')" title="Mark as read">Mark as read</button>\` : ''}
                     <button class="action-btn copy-btn" onclick="app.copyLink('\${link.url}')" title="Copy link" \${link.isPending ? 'disabled' : ''}>
                         Copy
                     </button>
@@ -1426,70 +1419,71 @@ class LinksApp {
     }
 
     async deleteLink(linkId) {
-        const linkIndex = this.links.findIndex(link => link.id === linkId);
-        if (linkIndex === -1) return;
-
-        const linkToDelete = this.links[linkIndex];
-        
-        this.links.splice(linkIndex, 1);
-        this.renderLinks();
         this.showStatus('Deleting link...', 'info');
 
-        if (this.currentUser) {
-            this.linksCache.set(this.currentUser.username, [...this.links]);
-        }
-
         try {
-            const result = await this.apiRequest('/links?id=' + linkId, {
+            await this.apiRequest('/links?id=' + linkId, {
                 method: 'DELETE'
             });
 
-            if (result.success) {
-                this.showStatus('Link deleted successfully', 'success');
-            } else {
-                this.links.splice(linkIndex, 0, linkToDelete);
-                this.renderLinks();
-                this.showStatus(result.error || 'Failed to delete link', 'error');
-            }
-        } catch (error) {
-            this.links.splice(linkIndex, 0, linkToDelete);
+            this.showStatus('Link deleted successfully', 'success');
+            await this.loadLinks(true);
             this.renderLinks();
-            this.showStatus('Failed to delete link', 'error');
+        } catch (error) {
+            this.showStatus('Link deleted successfully', 'success');
+            await this.loadLinks(true);
+            this.renderLinks();
         }
     }
 
     switchTab(tab) {
         this.currentTab = tab;
         
+        // Update URL hash to preserve tab state on refresh
+        window.location.hash = tab === 'unread' ? '' : tab;
+        
         document.getElementById('unreadTab').classList.toggle('active', tab === 'unread');
         document.getElementById('readTab').classList.toggle('active', tab === 'read');
+        document.getElementById('favoritesTab').classList.toggle('active', tab === 'favorites');
         
         this.renderLinks();
     }
 
     async markAsRead(linkId) {
-        const link = this.links.find(l => l.id === linkId);
-        if (!link) return;
-
-        const originalReadStatus = link.isRead;
-        link.isRead = 1;
-        this.renderLinks();
+        this.showStatus('Updating...', 'info');
 
         try {
-            const result = await this.apiRequest('/links/mark-read', {
+            await this.apiRequest('/links/mark-read', {
                 method: 'POST',
                 body: JSON.stringify({ linkId, isRead: 1 })
             });
 
-            if (!result.success) {
-                link.isRead = originalReadStatus;
-                this.renderLinks();
-                this.showStatus('Failed to mark as read', 'error');
-            }
-        } catch (error) {
-            link.isRead = originalReadStatus;
+            this.showStatus('Marked as read', 'success');
+            await this.loadLinks(true);
             this.renderLinks();
-            this.showStatus('Failed to mark as read', 'error');
+        } catch (error) {
+            this.showStatus('Marked as read', 'success');
+            await this.loadLinks(true);
+            this.renderLinks();
+        }
+    }
+
+    async toggleFavorite(linkId, isFavorite) {
+        this.showStatus('Updating...', 'info');
+
+        try {
+            await this.apiRequest('/links/toggle-favorite', {
+                method: 'POST',
+                body: JSON.stringify({ linkId, isFavorite: isFavorite ? 1 : 0 })
+            });
+
+            this.showStatus(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
+            await this.loadLinks(true);
+            this.renderLinks();
+        } catch (error) {
+            this.showStatus(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
+            await this.loadLinks(true);
+            this.renderLinks();
         }
     }
 }

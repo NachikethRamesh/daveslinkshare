@@ -241,11 +241,11 @@ export async function deleteLink(db, userId, linkId) {
 export async function markLinkAsRead(db, userId, linkId, isRead = 1) {
   try {
     const result = await db.prepare(`
-      UPDATE links 
+      UPDATE links
       SET is_read = ?
       WHERE id = ? AND user_id = ?
     `).bind(isRead, linkId, userId).run();
-    
+
     return {
       success: result.changes > 0,
       changes: result.changes

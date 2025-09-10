@@ -120,15 +120,14 @@ export async function handleMarkRead(request, env) {
   }
 
   if (request.method === 'POST') {
-    // Validate authorization
-    const authHeader = request.headers.get('Authorization');
-    const tokenData = validateToken(authHeader);
-    
-    if (!tokenData) {
-      return createErrorResponse('Authorization required', 401);
-    }
-
     try {
+      const authHeader = request.headers.get('Authorization');
+      const tokenData = validateToken(authHeader);
+      
+      if (!tokenData) {
+        return createErrorResponse('Authorization required', 401);
+      }
+
       const requestData = await request.json();
       const { linkId, isRead } = requestData;
 

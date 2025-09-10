@@ -12,11 +12,17 @@ class LinksApp {
         this.pendingSaves = new Set();
         this.lastSyncTime = 0;
         this.currentRoute = '/';
-        this.currentTab = 'unread';
+        this.currentTab = this.getInitialTab();
         
         // Security: Ensure no sensitive data is stored in localStorage
         this.validateLocalStorage();
         this.init();
+    }
+
+    getInitialTab() {
+        const hash = window.location.hash.replace('#', '');
+        const validTabs = ['read', 'favorites'];
+        return validTabs.includes(hash) ? hash : 'unread';
     }
 
     validateLocalStorage() {
@@ -275,6 +281,12 @@ class LinksApp {
         }
         this.clearAddLinkForm();
         this.links = [];
+        
+        // Set the correct tab state based on URL hash
+        document.getElementById('unreadTab').classList.toggle('active', this.currentTab === 'unread');
+        document.getElementById('readTab').classList.toggle('active', this.currentTab === 'read');
+        document.getElementById('favoritesTab').classList.toggle('active', this.currentTab === 'favorites');
+        
         this.renderLinks();
     }
 
@@ -676,6 +688,9 @@ class LinksApp {
 
     switchTab(tab) {
         this.currentTab = tab;
+        
+        // Update URL hash to preserve tab state on refresh
+        window.location.hash = tab === 'unread' ? '' : tab;
         
         document.getElementById('unreadTab').classList.toggle('active', tab === 'unread');
         document.getElementById('readTab').classList.toggle('active', tab === 'read');
