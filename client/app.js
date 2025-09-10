@@ -228,14 +228,17 @@ class LinksApp {
                     localStorage.setItem('authToken', this.token);
                     this.showStatus('Login successful!', 'success');
                     this.navigateTo('/home');
-                } else if (result.error === 'User not found') {
-                    this.switchToSignup();
-                    this.navigateTo('/signup');
-                    this.showStatus('User not found. Please create an account.', 'info');
-                    return;
-                } else if (result.error === 'Invalid credentials') {
-                    this.showStatus('Incorrect password. Please try again.', 'error');
-                    return;
+                } else {
+                    // Handle different error types
+                    if (result.error && result.error.includes('User not found')) {
+                        this.switchToSignup();
+                        this.navigateTo('/signup');
+                        this.showStatus('User not found. Please create an account.', 'info');
+                    } else if (result.error && result.error.includes('Invalid credentials')) {
+                        this.showStatus('Incorrect password. Please try again.', 'error');
+                    } else {
+                        this.showStatus(result.error || 'Login failed. Please try again.', 'error');
+                    }
                 }
             } else {
                 const result = await this.apiRequest('/auth/register', {
@@ -252,10 +255,19 @@ class LinksApp {
                     localStorage.setItem('authToken', this.token);
                     this.showStatus('Account created successfully!', 'success');
                     this.navigateTo('/home');
+                } else {
+                    this.showStatus(result.error || 'Registration failed. Please try again.', 'error');
                 }
             }
         } catch (error) {
-            this.showStatus('Authentication failed. Please try again.', 'error');
+            // Handle network errors or API response parsing errors
+            if (error.message && error.message.includes('User not found')) {
+                this.switchToSignup();
+                this.navigateTo('/signup');
+                this.showStatus('User not found. Please create an account.', 'info');
+            } else {
+                this.showStatus('Connection error. Please try again.', 'error');
+            }
         }
     }
 
@@ -336,9 +348,21 @@ class LinksApp {
                 localStorage.setItem('authToken', this.token);
                 this.showStatus('Password reset successfully! You are now logged in.', 'success');
                 this.navigateTo('/home');
+            } else {
+                // Handle different error types
+                if (result.error && result.error.includes('User not found')) {
+                    this.showStatus('User not found. Please check the username or create an account.', 'error');
+                } else {
+                    this.showStatus(result.error || 'Password reset failed. Please try again.', 'error');
+                }
             }
         } catch (error) {
-            this.showStatus(error.message, 'error');
+            // Handle network errors or API response parsing errors
+            if (error.message && error.message.includes('User not found')) {
+                this.showStatus('User not found. Please check the username or create an account.', 'error');
+            } else {
+                this.showStatus('Connection error. Please try again.', 'error');
+            }
         }
     }
 
