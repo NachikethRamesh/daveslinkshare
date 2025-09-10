@@ -222,6 +222,7 @@ class LinksApp {
                 // Clear sensitive data from memory
                 password = null;
 
+                // Always check for success first, regardless of HTTP status
                 if (result.success) {
                     this.token = result.token;
                     this.currentUser = result.user;
@@ -229,15 +230,16 @@ class LinksApp {
                     this.showStatus('Login successful!', 'success');
                     this.navigateTo('/home');
                 } else {
-                    // Handle different error types
-                    if (result.error && result.error.includes('User not found')) {
+                    // Handle different error types from server response
+                    const errorMessage = result.error || 'Login failed. Please try again.';
+                    if (errorMessage.includes('User not found')) {
                         this.switchToSignup();
                         this.navigateTo('/signup');
                         this.showStatus('User not found. Please create an account.', 'info');
-                    } else if (result.error && result.error.includes('Invalid credentials')) {
+                    } else if (errorMessage.includes('Invalid credentials')) {
                         this.showStatus('Incorrect password. Please try again.', 'error');
                     } else {
-                        this.showStatus(result.error || 'Login failed. Please try again.', 'error');
+                        this.showStatus(errorMessage, 'error');
                     }
                 }
             } else {
@@ -249,6 +251,7 @@ class LinksApp {
                 // Clear sensitive data from memory
                 password = null;
 
+                // Always check for success first, regardless of HTTP status
                 if (result.success) {
                     this.token = result.token;
                     this.currentUser = result.user;
@@ -260,14 +263,8 @@ class LinksApp {
                 }
             }
         } catch (error) {
-            // Handle network errors or API response parsing errors
-            if (error.message && error.message.includes('User not found')) {
-                this.switchToSignup();
-                this.navigateTo('/signup');
-                this.showStatus('User not found. Please create an account.', 'info');
-            } else {
-                this.showStatus('Connection error. Please try again.', 'error');
-            }
+            // Handle network errors, parsing errors, or when apiRequest throws
+            this.showStatus('Connection error. Please try again.', 'error');
         }
     }
 
@@ -342,6 +339,7 @@ class LinksApp {
                 body: JSON.stringify({ username, newPassword })
             });
 
+            // Always check for success first, regardless of HTTP status
             if (result.success) {
                 this.token = result.token;
                 this.currentUser = result.user;
@@ -349,20 +347,17 @@ class LinksApp {
                 this.showStatus('Password reset successfully! You are now logged in.', 'success');
                 this.navigateTo('/home');
             } else {
-                // Handle different error types
-                if (result.error && result.error.includes('User not found')) {
+                // Handle different error types from server response
+                const errorMessage = result.error || 'Password reset failed. Please try again.';
+                if (errorMessage.includes('User not found')) {
                     this.showStatus('User not found. Please check the username or create an account.', 'error');
                 } else {
-                    this.showStatus(result.error || 'Password reset failed. Please try again.', 'error');
+                    this.showStatus(errorMessage, 'error');
                 }
             }
         } catch (error) {
-            // Handle network errors or API response parsing errors
-            if (error.message && error.message.includes('User not found')) {
-                this.showStatus('User not found. Please check the username or create an account.', 'error');
-            } else {
-                this.showStatus('Connection error. Please try again.', 'error');
-            }
+            // Handle network errors, parsing errors, or when apiRequest throws
+            this.showStatus('Connection error. Please try again.', 'error');
         }
     }
 
@@ -588,16 +583,6 @@ class LinksApp {
     renderLinks() {
         const linksContainer = document.getElementById('links');
         
-        if (this.links.length === 0) {
-            linksContainer.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-title">Your links are empty</div>
-                    <div class="empty-description">Save your first link to get started</div>
-                </div>
-            `;
-            return;
-        }
-
         // Optimized: Use single pass filtering and sorting
         const filteredAndSorted = this.links
             .filter(link => {
@@ -612,6 +597,36 @@ class LinksApp {
                 const dateB = new Date(b.timestamp || b.dateAdded);
                 return dateB - dateA;
             });
+
+        // Only show empty state if we have no links at all, not just for the current tab
+        if (this.links.length === 0) {
+            linksContainer.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-title">Your links are empty</div>
+                    <div class="empty-description">Save your first link to get started</div>
+                </div>
+            `;
+            return;
+        }
+
+        // If no links for current tab, show a different message or just empty content
+        if (filteredAndSorted.length === 0) {
+            let emptyMessage = '';
+            if (this.currentTab === 'read') {
+                emptyMessage = 'No read links yet';
+            } else if (this.currentTab === 'favorites') {
+                emptyMessage = 'No favorite links yet';
+            } else {
+                emptyMessage = 'No unread links';
+            }
+            
+            linksContainer.innerHTML = `
+                <div class="tab-empty-state">
+                    <div class="tab-empty-message">${emptyMessage}</div>
+                </div>
+            `;
+            return;
+        }
 
         // Optimized: Use DocumentFragment for better performance
         const fragment = document.createDocumentFragment();
