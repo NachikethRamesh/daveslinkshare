@@ -1078,16 +1078,15 @@ class LinksApp {
                     body: JSON.stringify({ username, password })
                 });
 
-                // Always check for success first, regardless of HTTP status
-                if (result.success) {
+                if (result && result.success) {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
                     this.showStatus('Login successful!', 'success');
                     this.navigateTo('/home');
                 } else {
-                    // Handle different error types from server response
-                    const errorMessage = result.error || 'Login failed. Please try again.';
+                    // Handle different error types from server response or show default error
+                    const errorMessage = (result && result.error) || 'Login failed. Please try again.';
                     if (errorMessage.includes('User not found')) {
                         this.switchToSignup();
                         this.navigateTo('/signup');
@@ -1104,20 +1103,25 @@ class LinksApp {
                     body: JSON.stringify({ username, password })
                 });
 
-                // Always check for success first, regardless of HTTP status
-                if (result.success) {
+                if (result && result.success) {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
                     this.showStatus('Account created successfully!', 'success');
                     this.navigateTo('/home');
                 } else {
-                    this.showStatus(result.error || 'Registration failed. Please try again.', 'error');
+                    this.showStatus((result && result.error) || 'Registration failed. Please try again.', 'error');
                 }
             }
         } catch (error) {
-            // Handle network errors, parsing errors, or when apiRequest throws
-            this.showStatus('Connection error. Please try again.', 'error');
+            // Always show error message, similar to button pattern
+            if (this.isLoginMode) {
+                // For login failures, show appropriate message
+                this.showStatus('Login failed. Please check your credentials.', 'error');
+            } else {
+                // For registration failures
+                this.showStatus('Registration failed. Please try again.', 'error');
+            }
         }
     }
 
@@ -1192,16 +1196,15 @@ class LinksApp {
                 body: JSON.stringify({ username, newPassword })
             });
 
-            // Always check for success first, regardless of HTTP status
-            if (result.success) {
+            if (result && result.success) {
                 this.token = result.token;
                 this.currentUser = result.user;
                 localStorage.setItem('authToken', this.token);
                 this.showStatus('Password reset successfully! You are now logged in.', 'success');
                 this.navigateTo('/home');
             } else {
-                // Handle different error types from server response
-                const errorMessage = result.error || 'Password reset failed. Please try again.';
+                // Handle different error types from server response or show default error
+                const errorMessage = (result && result.error) || 'Password reset failed. Please try again.';
                 if (errorMessage.includes('User not found')) {
                     this.showStatus('User not found. Please check the username or create an account.', 'error');
                 } else {
@@ -1209,8 +1212,8 @@ class LinksApp {
                 }
             }
         } catch (error) {
-            // Handle network errors, parsing errors, or when apiRequest throws
-            this.showStatus('Connection error. Please try again.', 'error');
+            // Always show error message, similar to button pattern
+            this.showStatus('Password reset failed. Please try again.', 'error');
         }
     }
 
