@@ -5,7 +5,7 @@ A secure, full-stack link sharing application with user authentication and cloud
 ## 🏗️ Architecture
 
 ### Architecture
-- **Frontend**: Vanilla JavaScript SPA in `/client`
+- **Frontend**: Vanilla JavaScript SPA (embedded in Cloudflare Worker)
 - **Backend**: Cloudflare Workers serverless functions
 - **Database**: Cloudflare D1 (SQLite) for cloud storage
 - **Authentication**: JWT tokens with SHA-256 password hashing
@@ -42,24 +42,19 @@ Visit `http://localhost:3000` to access the application.
 ## 📁 Project Structure
 
 ```
-├── client/                 # Frontend application
-│   ├── index.html         # Main HTML file
-│   ├── styles.css         # Pocket-inspired styling
-│   └── app.js            # Client-side JavaScript
-├── server/                # Backend API
-│   ├── config.js         # Server configuration
-│   ├── server.js         # Main server file
-│   ├── middleware/       # Express middleware
-│   │   └── auth.js       # Authentication middleware
-│   ├── routes/           # API routes
-│   │   ├── auth.js       # Authentication endpoints
-│   │   └── links.js      # Links CRUD endpoints
-│   └── services/         # Business logic
-│       ├── auth.js       # Authentication service
-│       ├── database.js   # D1 database service
-│       └── links.js      # Links management service
+├── src/                   # Cloudflare Worker source code
+│   ├── index.js          # Main worker file with embedded HTML/CSS/JS
+│   ├── auth.js           # Authentication handlers
+│   ├── database.js       # D1 database operations
+│   ├── links.js          # Links CRUD operations
+│   └── constants.js      # Shared constants and utilities
+├── scripts/              # Deployment and setup scripts
+│   ├── deploy.js         # Complete deployment automation
+│   └── setup-d1.js       # D1 database setup
+├── schema.sql            # D1 database schema
+├── wrangler.toml         # Cloudflare Workers configuration
 ├── package.json          # Dependencies and scripts
-├── env.template          # Environment variables template
+├── env.example           # Environment variables template
 └── README.md            # This file
 ```
 

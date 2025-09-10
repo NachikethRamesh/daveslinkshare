@@ -1,5 +1,3 @@
-// Shared constants for Dave's Links App - Optimized
-
 export const CORS_HEADERS = {
   'Content-Type': 'application/json',
   'Access-Control-Allow-Origin': '*',
@@ -7,12 +5,10 @@ export const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization'
 };
 
-// Optimized: Pre-stringify common responses
 const ERROR_RESPONSE_TEMPLATE = JSON.stringify({ success: false, error: '' });
 const SUCCESS_RESPONSE_TEMPLATE = JSON.stringify({ success: true });
 
 export function createResponse(data, status = 200) {
-  // Optimized: Use pre-stringified templates for common responses
   let body;
   if (data.success === false && data.error) {
     body = ERROR_RESPONSE_TEMPLATE.replace('""', `"${data.error}"`);
@@ -21,7 +17,7 @@ export function createResponse(data, status = 200) {
   } else {
     body = JSON.stringify(data);
   }
-  
+
   return new Response(body, {
     status,
     headers: CORS_HEADERS

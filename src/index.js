@@ -3,12 +3,10 @@ import { handleLinks, handleMarkRead, handleToggleFavorite } from './links.js';
 import { checkDatabaseHealth } from './database.js';
 import { CORS_HEADERS, createResponse, createErrorResponse } from './constants.js';
 
-// Health check handler - Optimized
 async function handleHealth(request, env) {
   try {
     const dbHealth = await checkDatabaseHealth(env.DB);
-    
-    // Optimized: Pre-construct response object
+
     const responseData = {
       status: 'healthy',
       timestamp: new Date().toISOString(),
@@ -152,6 +150,8 @@ function getIndexHTML() {
                 </button>
             </form>
             
+            <div id="statusMessage" class="status-message" style="display: none;"></div>
+            
             <div class="auth-toggle">
                 <span id="authToggleText">Don't have an account?</span>
                 <a id="authToggleLink" class="auth-toggle-link">Sign up</a>
@@ -212,6 +212,8 @@ function getIndexHTML() {
                     Reset Password
                 </button>
             </form>
+            
+            <div id="resetStatusMessage" class="status-message" style="display: none;"></div>
             
             <div class="auth-toggle">
                 <a id="backToLoginLink" class="auth-toggle-link">← Back to Sign In</a>
@@ -452,6 +454,34 @@ body {
     width: 100%;
 }
 
+.status-message {
+    padding: 12px 16px;
+    border-radius: var(--radius);
+    margin: 16px 0;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    display: none;
+}
+
+.status-message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.status-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.status-message.info {
+    background: #d1ecf1;
+    color: #0c5460;
+    border: 1px solid #bee5eb;
+}
+
 .auth-toggle {
     text-align: center;
     margin-top: 24px;
@@ -552,6 +582,14 @@ body {
     grid-template-columns: 350px 1fr;
     gap: 24px;
     align-items: start;
+    align-content: start;
+}
+
+.sidebar, .content-area {
+    display: flex;
+    flex-direction: column;
+    margin-top: 0;
+    padding-top: 0;
 }
 
 .sidebar {
@@ -559,13 +597,16 @@ body {
     border-radius: 8px;
     border: 1px solid var(--border);
     box-shadow: var(--shadow);
-    position: sticky;
-    top: 100px;
+    /* Remove sticky to align with content top */
+    position: static;
+    align-self: start;
 }
 
 .sidebar-header {
     padding: 20px 20px 16px;
     border-bottom: 1px solid var(--border);
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .sidebar-title {
@@ -588,11 +629,14 @@ body {
     display: flex;
     flex-direction: column;
     overflow: hidden;
+    align-self: start;
 }
 
 .content-header {
     padding: 20px 20px 16px;
     border-bottom: 1px solid var(--border);
+    margin: 0;
+    flex-shrink: 0;
 }
 
 .content-title {
@@ -995,7 +1039,11 @@ class LinksApp {
                 }
                 break;
             case '/reset-password':
+                if (isAuthenticated) {
+                    this.navigateTo('/home');
+                } else {
                 this.showResetContainer();
+                }
                 break;
             case '/home':
             case '/dashboard':
@@ -1082,17 +1130,18 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    this.showStatus('Login successful!', 'success');
                     this.navigateTo('/home');
+                    // Clear browser history to prevent back button navigation to auth pages
+                    window.history.replaceState({}, '', '/home');
                 } else {
                     // Handle different error types from server response or show default error
                     const errorMessage = (result && result.error) || 'Login failed. Please try again.';
                     if (errorMessage.includes('User not found')) {
-                        this.switchToSignup();
-                        this.navigateTo('/signup');
-                        this.showStatus('User not found. Please create an account.', 'info');
+                    this.switchToSignup();
+                    this.navigateTo('/signup');
+                    this.showStatus('User not found. Please create an account.', 'info');
                     } else if (errorMessage.includes('Invalid credentials')) {
-                        this.showStatus('Incorrect password. Please try again.', 'error');
+                    this.showStatus('Incorrect password. Please try again.', 'error');
                     } else {
                         this.showStatus(errorMessage, 'error');
                     }
@@ -1107,8 +1156,9 @@ class LinksApp {
                     this.token = result.token;
                     this.currentUser = result.user;
                     localStorage.setItem('authToken', this.token);
-                    this.showStatus('Account created successfully!', 'success');
                     this.navigateTo('/home');
+                    // Clear browser history to prevent back button navigation to auth pages
+                    window.history.replaceState({}, '', '/home');
                 } else {
                     this.showStatus((result && result.error) || 'Registration failed. Please try again.', 'error');
                 }
@@ -1147,6 +1197,9 @@ class LinksApp {
         }
         this.clearAddLinkForm();
         this.links = [];
+        
+        // Clear any status messages
+        this.clearStatusMessages();
         
         // Set the correct tab state based on URL hash
         document.getElementById('unreadTab').classList.toggle('active', this.currentTab === 'unread');
@@ -1200,8 +1253,9 @@ class LinksApp {
                 this.token = result.token;
                 this.currentUser = result.user;
                 localStorage.setItem('authToken', this.token);
-                this.showStatus('Password reset successfully! You are now logged in.', 'success');
                 this.navigateTo('/home');
+                // Clear browser history to prevent back button navigation to auth pages
+                window.history.replaceState({}, '', '/home');
             } else {
                 // Handle different error types from server response or show default error
                 const errorMessage = (result && result.error) || 'Password reset failed. Please try again.';
@@ -1237,8 +1291,37 @@ class LinksApp {
     }
 
     showStatus(message, type = 'info') {
-        // Notifications disabled site-wide per request
-        return;
+        // Try to find the appropriate status element based on current view
+        let statusElement = document.getElementById('statusMessage');
+        if (!statusElement) {
+            statusElement = document.getElementById('resetStatusMessage');
+        }
+        if (!statusElement) return;
+        
+        statusElement.textContent = message;
+        statusElement.className = 'status-message ' + type;
+        statusElement.style.display = 'block';
+        
+        // Auto-hide after 5 seconds for success/info messages
+        if (type === 'success' || type === 'info') {
+            setTimeout(() => {
+                statusElement.style.display = 'none';
+            }, 5000);
+        }
+    }
+
+    clearStatusMessages() {
+        const statusElement = document.getElementById('statusMessage');
+        const resetStatusElement = document.getElementById('resetStatusMessage');
+        
+        if (statusElement) {
+            statusElement.style.display = 'none';
+            statusElement.textContent = '';
+        }
+        if (resetStatusElement) {
+            resetStatusElement.style.display = 'none';
+            resetStatusElement.textContent = '';
+        }
     }
 
     switchToSignup() {
@@ -1327,14 +1410,11 @@ class LinksApp {
                 method: 'POST',
                 body: JSON.stringify({ url, title, category })
             });
-
             this.showStatus('Link saved successfully!', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         } catch (error) {
             this.showStatus('Link saved successfully!', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         }
     }
 
@@ -1356,8 +1436,8 @@ class LinksApp {
         try {
             const result = await this.apiRequest('/links');
             if (result.success) {
-                this.links = result.links || [];
-                this.renderLinks();
+                    this.links = result.links || [];
+                    this.renderLinks();
             } else {
                 this.showStatus(result.error || 'Failed to load links', 'error');
             }
@@ -1385,7 +1465,7 @@ class LinksApp {
 
     renderLinks() {
         const linksContainer = document.getElementById('links');
-
+        
         // Filter links first to check if we have any for the current tab
         const filteredLinks = this.links.filter(link => {
             if (this.currentTab === 'read') {
@@ -1479,14 +1559,11 @@ class LinksApp {
             await this.apiRequest('/links?id=' + linkId, {
                 method: 'DELETE'
             });
-
             this.showStatus('Link deleted successfully', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         } catch (error) {
             this.showStatus('Link deleted successfully', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         }
     }
 
@@ -1511,14 +1588,11 @@ class LinksApp {
                 method: 'POST',
                 body: JSON.stringify({ linkId, isRead: 1 })
             });
-
             this.showStatus('Marked as read', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         } catch (error) {
             this.showStatus('Marked as read', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         }
     }
 
@@ -1530,14 +1604,11 @@ class LinksApp {
                 method: 'POST',
                 body: JSON.stringify({ linkId, isFavorite: isFavorite ? 1 : 0 })
             });
-
             this.showStatus(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         } catch (error) {
             this.showStatus(isFavorite ? 'Added to favorites' : 'Removed from favorites', 'success');
             await this.loadLinks(true);
-            this.renderLinks();
         }
     }
 }

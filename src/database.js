@@ -1,4 +1,3 @@
-// Password hashing utilities - Optimized
 const SALT = 'salt_daves_links_2025';
 const encoder = new TextEncoder();
 
@@ -6,8 +5,7 @@ async function generatePasswordHash(password) {
   const data = encoder.encode(password + SALT);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = new Uint8Array(hashBuffer);
-  
-  // Optimized: Use Uint8Array directly instead of Array.from
+
   let result = '';
   for (let i = 0; i < hashArray.length; i++) {
     result += hashArray[i].toString(16).padStart(2, '0');
@@ -19,8 +17,7 @@ async function generateUserHash(username) {
   const data = encoder.encode(username + Date.now().toString());
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
   const hashArray = new Uint8Array(hashBuffer);
-  
-  // Optimized: Use Uint8Array directly instead of Array.from
+
   let result = '';
   for (let i = 0; i < hashArray.length; i++) {
     result += hashArray[i].toString(16).padStart(2, '0');
@@ -130,8 +127,8 @@ export async function updateUserPassword(db, username, newPassword) {
     `).bind(newPasswordHash, username).run();
     
     return {
-      success: result.changes > 0,
-      changes: result.changes
+      success: result.meta.changes > 0,
+      changes: result.meta.changes
     };
   } catch (error) {
     return { success: false, error: error.message };
@@ -147,7 +144,6 @@ export async function getUserLinks(db, userId) {
       ORDER BY timestamp DESC
     `).bind(userId).all();
     
-    // Optimized: Direct mapping without intermediate array
     const results = links.results || [];
     const formattedLinks = new Array(results.length);
     
